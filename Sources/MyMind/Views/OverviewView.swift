@@ -162,14 +162,18 @@ struct OverviewView: View {
 
     @ViewBuilder
     private func highFlagRow(_ item: Item) -> some View {
-        HStack(alignment: .center, spacing: 10) {
-            Text("High")
+        HStack(alignment: .center, spacing: 12) {
+            Text("High Prio")
                 .font(.inter(11, weight: .bold))
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
                 .frame(width: 110)
-                .padding(.vertical, 10)
                 .background(Theme.pink, in: RoundedRectangle(cornerRadius: 10))
+
+            // Connector spacer — matches ClusterCardView's connector section width
+            Color.clear.frame(width: 12)
 
             ItemCardView(item: item) {
                 appState.navigate(to: .itemDetail(item.id))
@@ -184,6 +188,7 @@ struct OverviewView: View {
                 reload()
             }
         }
+        .padding(8)
     }
 
     private func allOpenItems() -> [Item] {
