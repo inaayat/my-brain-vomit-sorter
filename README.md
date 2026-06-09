@@ -140,6 +140,21 @@ These are NOT in the git repo — they're personal to each device.
 
 ---
 
+## Updating the App
+
+When new changes are pushed to GitHub, pull and rebuild:
+
+```bash
+cd ~/my-mind
+git pull
+swift build -c release
+cp .build/arm64-apple-macosx/release/MyMind /Applications/MyMind.app/Contents/MacOS/MyMind
+```
+
+Then relaunch the app. Your data in `~/.my-mind/mind.db` is unaffected by updates.
+
+---
+
 ## Pushing Changes to GitHub
 
 After making changes to the code:

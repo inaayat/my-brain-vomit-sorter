@@ -89,6 +89,21 @@ struct EditSheet: View {
         updated.url = trimmedUrl.isEmpty ? nil : trimmedUrl
         updated.urlTitle = trimmedUrlTitle.isEmpty ? nil : trimmedUrlTitle
         try? Queries.updateItem(updated)
+
+        // If URL was newly added and item is not a resource, auto-create a linked resource item
+        let previousUrl = item.url?.trimmingCharacters(in: .whitespaces) ?? ""
+        if !trimmedUrl.isEmpty && previousUrl.isEmpty && selectedCategory != .resource {
+            let resourceItem = Item.new(
+                text: trimmedUrlTitle.isEmpty ? trimmedUrl : trimmedUrlTitle,
+                category: .resource,
+                url: trimmedUrl,
+                urlTitle: trimmedUrlTitle.isEmpty ? nil : trimmedUrlTitle
+            )
+            try? Queries.addItem(resourceItem)
+            let link = Link.new(fromId: item.id, toId: resourceItem.id)
+            try? Queries.addLink(link)
+        }
+
         appState.refreshCounts()
         dismiss()
     }
