@@ -1,74 +1,205 @@
 # my-mind
 
-A native macOS SwiftUI personal knowledge management app. Capture thoughts, organize them into actions, brainstorms, and resources, cluster related items, and track wins.
+A native macOS SwiftUI personal knowledge management app. Capture thoughts, track actions, brainstorm ideas, save resources, cluster related items, and log wins.
 
-## Requirements
+---
 
-- macOS 14+ (Sonoma)
-- Swift 5.9+
-- Ollama (optional, for local AI without API key)
+## Download & Install on a New Mac
 
-## Setup
+### Prerequisites
+- macOS 14 (Sonoma) or later
+- Xcode Command Line Tools: `xcode-select --install`
+- Homebrew (optional, for Ollama): `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
+### Step 1: Clone the repo
 ```bash
-# Clone
 git clone https://github.com/inaayat/my-mind.git
 cd my-mind
-
-# Build
-swift build
-
-# Run
-swift run
 ```
 
-### Install as app
-
+### Step 2: Build
 ```bash
-# Release build
 swift build -c release
+```
+This downloads dependencies (GRDB) and compiles the app. Takes ~30-60 seconds on first build.
 
-# Create app bundle
+### Step 3: Install as a macOS app
+```bash
+# Create the app bundle
 mkdir -p /Applications/MyMind.app/Contents/MacOS
 mkdir -p /Applications/MyMind.app/Contents/Resources
+
+# Copy the built binary
 cp .build/arm64-apple-macosx/release/MyMind /Applications/MyMind.app/Contents/MacOS/MyMind
-cp icon.icns /Applications/MyMind.app/Contents/Resources/AppIcon.icns
+
+# Copy the Info.plist (creates it if needed)
+cat > /Applications/MyMind.app/Contents/Info.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key><string>MyMind</string>
+    <key>CFBundleIdentifier</key><string>com.igill.mymind</string>
+    <key>CFBundleName</key><string>MyMind</string>
+    <key>CFBundleDisplayName</key><string>MyMind</string>
+    <key>CFBundleVersion</key><string>1.0.0</string>
+    <key>CFBundleShortVersionString</key><string>1.0.0</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>LSMinimumSystemVersion</key><string>14.0</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
+    <key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>
+EOF
 ```
 
-### AI Setup (optional)
+### Step 4: Launch
+```bash
+open -a /Applications/MyMind.app
+```
 
-For AI-powered categorization and clustering, either:
+### Step 5: Grant Accessibility (for global hotkey)
+1. System Settings > Privacy & Security > Accessibility
+2. Click + and add `/Applications/MyMind.app`
+3. Restart the app
 
-**Option A: Anthropic API key**
+### Step 6: (Optional) Launch at login
+```bash
+cat > ~/Library/LaunchAgents/com.igill.mymind.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.igill.mymind</string>
+    <key>ProgramArguments</key>
+    <array><string>open</string><string>-a</string><string>/Applications/MyMind.app</string></array>
+    <key>RunAtLoad</key><true/>
+</dict>
+</plist>
+EOF
+launchctl load ~/Library/LaunchAgents/com.igill.mymind.plist
+```
+
+---
+
+## AI Setup (Optional)
+
+AI powers auto-categorization, clustering, and the Ask AI feature.
+
+### Option A: Anthropic API key
 ```bash
 mkdir -p ~/.my-mind
 echo '{"apiKey": "sk-ant-..."}' > ~/.my-mind/config.json
 ```
 
-**Option B: Local Ollama (free, no key needed)**
+### Option B: Local Ollama (free, no API key needed)
 ```bash
 brew install ollama
 brew services start ollama
 ollama pull llama3.2
 ```
-The app auto-detects Ollama and uses it when no API key is set.
+The app auto-detects Ollama at `localhost:11434` and uses it when no API key is configured.
+
+---
 
 ## Features
 
-- **Capture** — inline thought capture with AI auto-categorization
-- **Actions** — tasks with checkboxes, due dates, completion tracking
-- **Brainstorms** — ideas and musings, auto-clustered by AI
-- **Resources** — URLs with titles, linked to parent items
-- **Clusters** — drag items onto each other to group them; AI names clusters
-- **Wins** — log achievements when completing tasks (brag doc)
-- **Global hotkey** — Ctrl+Option+M opens floating capture panel
-- **Menu bar** — always running, quick access
+### Core
+| Feature | Description |
+|---------|-------------|
+| **Capture** | Inline text field at top of Overview. Type a thought, hit enter. AI categorizes it. |
+| **Actions** | Tasks with checkboxes. Complete them from any view. Log a "Win" on completion. |
+| **Brainstorms** | Ideas and observations. Auto-clustered by AI into themed groups. |
+| **Resources** | URLs with display titles. Auto-created when you add a URL to any item. |
+| **Clusters** | Drag one item onto another to create a group. AI names it. Expand/collapse. |
+| **Wins** | Achievement log. When you complete a task, record what you achieved + link to artifact. |
+| **Completed** | All done items across all categories. |
 
-## Data
+### AI Features
+- **Auto-categorize**: AI picks category (action/brainstorm/resource), generates tags, cleans text
+- **Auto-cluster**: Related items grouped automatically with AI-generated titles
+- **Ollama fallback**: Works offline with local llama3.2 model
 
-All data stored locally at `~/.my-mind/mind.db` (SQLite via GRDB).
-Config at `~/.my-mind/config.json`.
+### UX
+- **Global hotkey**: `Ctrl+Option+M` opens a floating capture panel over any app
+- **Menu bar**: Brain icon always in menu bar, never fully quits
+- **Detail panel**: Click any item → slides in from the right (40% width)
+- **Drag & drop**: Drag items onto each other to cluster them
+- **Inter font**: Clean typography throughout
 
-## Font
+---
 
-Uses [Inter](https://rsms.me/inter/) — bundled in the app.
+## Data Storage
+
+All data is local:
+- **Database**: `~/.my-mind/mind.db` (SQLite)
+- **Config**: `~/.my-mind/config.json` (API key)
+
+These are NOT in the git repo — they're personal to each device.
+
+---
+
+## Pushing Changes to GitHub
+
+After making changes to the code:
+
+```bash
+cd ~/my-mind
+
+# See what changed
+git status
+git diff
+
+# Stage and commit
+git add -A
+git commit -m "Description of what you changed"
+
+# Push to GitHub
+git push
+```
+
+### Quick one-liner to commit + push:
+```bash
+cd ~/my-mind && git add -A && git commit -m "Update app" && git push
+```
+
+### After rebuilding, update the installed app:
+```bash
+cd ~/my-mind
+swift build -c release
+cp .build/arm64-apple-macosx/release/MyMind /Applications/MyMind.app/Contents/MacOS/MyMind
+```
+
+---
+
+## Project Structure
+
+```
+my-mind/
+├── Package.swift              # Dependencies (GRDB)
+├── Sources/MyMind/
+│   ├── MyMindApp.swift        # App entry point, menu bar, window
+│   ├── HotkeyManager.swift   # Ctrl+Option+M global hotkey
+│   ├── QuickCapturePanel.swift # Floating capture overlay
+│   ├── FontLoader.swift       # Inter font registration
+│   ├── Models/                # Data models (Item, Cluster, Comment, Link, Win)
+│   ├── Database/              # SQLite via GRDB (migrations, queries)
+│   ├── AI/                    # Anthropic API + Ollama fallback
+│   ├── ViewModels/            # Observable state management
+│   └── Views/                 # All SwiftUI views
+└── Resources/                 # Inter font files (.ttf)
+```
+
+---
+
+## Color Palette
+
+| Element | Hex |
+|---------|-----|
+| Canvas background | `#F5EFE6` |
+| Action cards | `#EAF2D9` |
+| Brainstorm cards | `#FBEAF1` |
+| Resource cards | `#EEF3FB` |
+| Cluster cards | `#FBF5E3` |
+| Sidebar | `#0F0F10` |
+| Accent (purple) | `#A75A8A` |
