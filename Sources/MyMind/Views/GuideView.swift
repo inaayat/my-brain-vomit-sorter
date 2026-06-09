@@ -13,54 +13,74 @@ struct GuideView: View {
                             .font(.inter(28, weight: .bold))
                             .foregroundStyle(Theme.textPrimary)
                     }
-                    Text("Your personal thought capture and organization tool.")
+                    Text("Personal thought capture, organization, and prioritization.")
                         .font(.inter(14))
                         .foregroundStyle(Theme.textMuted)
                 }
 
                 guideSection(title: "Quick Start", color: Theme.purple) {
-                    guideBullet(icon: "plus.bubble.fill", text: "Type in the capture bar at the top of Overview to add any thought")
-                    guideBullet(icon: "wand.and.stars", text: "AI auto-categorizes into Actions, Brainstorms, or Resources")
-                    guideBullet(icon: "keyboard", text: "Press Ctrl+Option+M from anywhere for the floating capture overlay")
+                    guideBullet(icon: "plus.bubble.fill", text: "Type in the capture bar to add a thought — AI auto-categorizes it")
+                    guideBullet(icon: "keyboard", text: "Ctrl+Option+M opens the floating capture overlay from anywhere")
                     guideBullet(icon: "hand.draw", text: "Drag one item onto another to create a Cluster")
+                    guideBullet(icon: "arrow.up", text: "Click the priority circle to cycle: Standard → High → Backlog")
                 }
 
-                guideSection(title: "Overview", color: Theme.textPrimary) {
-                    guideText("Your dashboard. Stat cards show counts per category (click to navigate). Below: your items grouped by type with clusters inline.")
+                guideSection(title: "Feed View", color: Theme.textPrimary) {
+                    guideText("The main view shows all open items. Use the filter cards at top to show only Actions, Brainstorms, or Resources. Default opens on Actions.")
+                    guideText("'All Open' shows every non-completed, non-resource item as a flat list sorted by priority then category.")
+                    guideText("Category filters show clusters inline with their items grouped under the cluster title.")
                 }
 
-                guideSection(title: "Actions", color: Theme.greenDark) {
-                    guideText("Concrete tasks. Each has a checkbox on the right \u{2014} click to complete. On completion you can 'Log Win' to record the achievement.")
+                guideSection(title: "Item Types", color: Theme.greenDark) {
+                    guideBullet(icon: "bolt.fill", text: "Actions — tasks and to-dos. Complete with the checkbox on the right.")
+                    guideBullet(icon: "cloud.bolt.fill", text: "Brainstorms — ideas, observations, questions to explore.")
+                    guideBullet(icon: "link", text: "Resources — URLs and links. Auto-created when you add a URL to any item.")
                 }
 
-                guideSection(title: "Brainstorms", color: Theme.pinkDark) {
-                    guideText("Ideas, observations, questions. Auto-clustered by AI into themed groups. Drag items onto each other to manually cluster.")
-                }
-
-                guideSection(title: "Resources", color: Theme.blueDark) {
-                    guideText("URLs and links. When you add a URL to any item, a Resource is auto-created. Shows the URL title (display name) with a clickable link.")
+                guideSection(title: "Priority", color: Theme.pinkDark) {
+                    guideBullet(icon: "arrow.up", text: "High (pink circle) — shows at top of lists")
+                    guideBullet(icon: "arrow.up", text: "Standard (gray circle) — normal priority")
+                    guideBullet(icon: "arrow.down", text: "Backlog (yellow circle) — shown in separate 'Backlog' section at bottom")
+                    guideText("Click the priority button to cycle through states. High-priority items always sort to top.")
                 }
 
                 guideSection(title: "Clusters", color: Theme.yellowDark) {
-                    guideText("Groups of related items across any category. Create by dragging items together. Click the title to rename. Expand/collapse with the chevron. Merge clusters from the Clusters page.")
+                    guideText("Clusters group related items. Create by dragging one item onto another.")
+                    guideBullet(icon: "cursorarrow.click", text: "Single-click cluster title to rename")
+                    guideBullet(icon: "cursorarrow.click.2", text: "Double-click cluster title to collapse/expand")
+                    guideBullet(icon: "minus.circle", text: "'Decluster' button removes an item from its cluster")
+                    guideText("When capturing a new thought, type in the 'Add to cluster...' field to assign directly.")
                 }
 
                 guideSection(title: "Wins", color: Theme.yellowDark) {
-                    guideText("Your brag doc. When completing a task, log what you achieved + link to an artifact (PR, doc, etc). Builds over time for reviews and 1:1s.")
+                    guideText("When you complete any item, you're prompted to 'Log Win' — record what you achieved and link an artifact (URL to PR, doc, etc). Builds your brag doc over time.")
                 }
 
-                guideSection(title: "Shortcuts", color: Theme.textMuted) {
-                    shortcutRow(keys: "Ctrl + Option + M", description: "Floating capture overlay from anywhere")
+                guideSection(title: "Capture Options", color: Theme.blueDark) {
+                    guideText("When typing a new thought, expanded options appear:")
+                    guideBullet(icon: "tag", text: "Category pills: Auto, Action, Brainstorm, Resource")
+                    guideBullet(icon: "calendar", text: "Due date toggle")
+                    guideBullet(icon: "link", text: "URL + URL title fields")
+                    guideBullet(icon: "rectangle.3.group", text: "Add to cluster (type-to-search)")
+                    guideBullet(icon: "bookmark", text: "Link existing resource (dropdown)")
+                }
+
+                guideSection(title: "Sidebar", color: Theme.textMuted) {
+                    guideBullet(icon: "square.grid.2x2", text: "Feed — main view with filter cards")
+                    guideBullet(icon: "rectangle.3.group", text: "Clusters — manage, merge, delete clusters")
+                    guideBullet(icon: "checkmark.circle", text: "Completed — all finished items")
+                    guideBullet(icon: "trophy.fill", text: "Wins — your achievement log")
+                    guideBullet(icon: "brain.head.profile", text: "This guide (you're here)")
                 }
 
                 guideSection(title: "AI Setup", color: Theme.textMuted) {
-                    guideText("Add your Anthropic key to ~/.my-mind/config.json:")
+                    guideText("AI categorizes items and names clusters. Configure in ~/.my-mind/config.json:")
                     Text("{\"apiKey\": \"sk-ant-...\"}")
                         .font(.inter(11))
                         .foregroundStyle(Theme.textMuted)
                         .padding(8)
                         .background(Theme.softGray, in: RoundedRectangle(cornerRadius: 6))
-                    guideText("Or install Ollama for free local AI: brew install ollama && ollama pull llama3.2")
+                    guideText("Or use Ollama for free local AI: brew install ollama && ollama pull llama3.2")
                 }
             }
             .padding(28)
@@ -96,19 +116,6 @@ struct GuideView: View {
                 .frame(width: 16)
             Text(text)
                 .font(.inter(13))
-                .foregroundStyle(Theme.textSecondary)
-        }
-    }
-
-    private func shortcutRow(keys: String, description: String) -> some View {
-        HStack(spacing: 12) {
-            Text(keys)
-                .font(.inter(11, weight: .semibold))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Theme.softGray, in: RoundedRectangle(cornerRadius: 4))
-            Text(description)
-                .font(.inter(12))
                 .foregroundStyle(Theme.textSecondary)
         }
     }

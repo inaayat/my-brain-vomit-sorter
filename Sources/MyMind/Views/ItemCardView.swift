@@ -40,24 +40,7 @@ struct ItemCardView: View {
 
             Spacer()
 
-            // Priority indicator — tap to cycle: standard → high → backlog → standard
-            Button {
-                var updated = item
-                switch item.priority {
-                case .medium, .low: updated.priority = .high
-                case .high: updated.priority = .backlog
-                case .backlog: updated.priority = .medium
-                }
-                try? Queries.updateItem(updated)
-                onChange?()
-            } label: {
-                Image(systemName: priorityIcon)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(priorityFg)
-                    .frame(width: 24, height: 24)
-                    .background(priorityBg, in: Circle())
-            }
-            .buttonStyle(.plain)
+            PriorityPicker(item: item, onChange: { onChange?() })
 
             // Decluster — remove from cluster
             if item.clusterId != nil {
@@ -108,30 +91,6 @@ struct ItemCardView: View {
             return true
         } isTargeted: { targeted in
             isDropTarget = targeted
-        }
-    }
-
-    private var priorityIcon: String {
-        switch item.priority {
-        case .high: return "arrow.up"
-        case .backlog: return "arrow.down"
-        default: return "arrow.up"
-        }
-    }
-
-    private var priorityFg: Color {
-        switch item.priority {
-        case .high: return .white
-        case .backlog: return .white
-        default: return Theme.textMuted
-        }
-    }
-
-    private var priorityBg: Color {
-        switch item.priority {
-        case .high: return Theme.pink
-        case .backlog: return Theme.yellow
-        default: return Theme.softGray
         }
     }
 

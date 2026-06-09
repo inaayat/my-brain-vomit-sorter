@@ -71,6 +71,51 @@ extension Color {
     }
 }
 
+struct PriorityPicker: View {
+    let item: Item
+    var onChange: () -> Void
+
+    var body: some View {
+        Menu {
+            Button {
+                setPriority(.high)
+            } label: {
+                Label("High", systemImage: "arrow.up")
+            }
+            Button {
+                setPriority(.medium)
+            } label: {
+                Label("Standard", systemImage: "minus")
+            }
+            Button {
+                setPriority(.backlog)
+            } label: {
+                Label("Backlog", systemImage: "arrow.down")
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: item.priority.isHigh ? "arrow.up" : (item.priority.isBacklog ? "arrow.down" : "minus"))
+                    .font(.system(size: 8, weight: .bold))
+                Text(item.priority.isHigh ? "High" : (item.priority.isBacklog ? "Backlog" : "Std"))
+                    .font(.inter(8, weight: .medium))
+            }
+            .foregroundStyle(item.priority.isHigh || item.priority.isBacklog ? .white : Theme.textMuted)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(item.priority.isHigh ? Theme.pink : (item.priority.isBacklog ? Theme.yellow : Theme.softGray), in: Capsule())
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+    }
+
+    private func setPriority(_ priority: Priority) {
+        var updated = item
+        updated.priority = priority
+        try? Queries.updateItem(updated)
+        onChange()
+    }
+}
+
 struct PillButton: View {
     let label: String
     let isSelected: Bool
