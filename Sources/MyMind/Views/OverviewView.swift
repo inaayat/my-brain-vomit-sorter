@@ -48,7 +48,7 @@ struct OverviewView: View {
             }
             .buttonStyle(.plain)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     private var filterChips: some View {
