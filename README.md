@@ -84,7 +84,7 @@ launchctl load ~/Library/LaunchAgents/com.igill.mymind.plist
 
 ## AI Setup (Optional)
 
-AI powers auto-categorization, clustering, and the Ask AI feature.
+AI powers auto-categorization and clustering.
 
 ### Option A: Anthropic API key
 ```bash
@@ -116,9 +116,10 @@ The app auto-detects Ollama at `localhost:11434` and uses it when no API key is 
 | **Completed** | All done items across all categories. |
 
 ### AI Features
-- **Auto-categorize**: AI picks category (action/brainstorm/resource), generates tags, cleans text
-- **Auto-cluster**: Related items grouped automatically with AI-generated titles
-- **Ollama fallback**: Works offline with local llama3.2 model
+- **Auto-categorize**: On every capture (Auto mode), AI picks category (action/brainstorm/resource), cleans text, and generates tags
+- **Auto-cluster**: After saving, AI assigns the item to an existing cluster or creates a new one with a generated title
+- **Drag-to-cluster title**: When you drag two items together, AI names the new cluster
+- **Ollama fallback**: Works offline with local llama3.2 model when no Anthropic API key is set
 
 ### UX
 - **Global hotkey**: `Ctrl+Option+M` opens a floating capture panel over any app
