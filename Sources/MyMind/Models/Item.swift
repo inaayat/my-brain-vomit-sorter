@@ -5,10 +5,22 @@ enum Category: String, Codable, CaseIterable, DatabaseValueConvertible {
     case brainstorm, action, revisit, resource
 
     static var activeCategories: [Category] { [.action, .brainstorm, .resource] }
+
+    var sortOrder: Int {
+        switch self {
+        case .action: return 0
+        case .brainstorm: return 1
+        case .resource: return 2
+        case .revisit: return 3
+        }
+    }
 }
 
 enum Priority: String, Codable, CaseIterable, DatabaseValueConvertible {
     case high, medium, low
+
+    var isHigh: Bool { self == .high }
+    var sortOrder: Int { self == .high ? 0 : 1 }
 }
 
 struct Item: Identifiable, Codable, Equatable {

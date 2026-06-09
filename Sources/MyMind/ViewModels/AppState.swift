@@ -3,10 +3,6 @@ import SwiftUI
 
 enum NavigationDestination: Hashable {
     case overview
-    case actions
-    case brainstorms
-    case resources
-    case allItems
     case completed
     case wins
     case clusters

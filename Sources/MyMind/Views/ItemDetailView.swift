@@ -66,7 +66,7 @@ struct ItemDetailView: View {
 
             Spacer()
 
-            if item.category == .action && !item.done {
+            if !item.done {
                 Button {
                     try? Queries.completeItem(id: item.id)
                     loadData()

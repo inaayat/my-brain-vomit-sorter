@@ -39,6 +39,35 @@ struct ItemCardView: View {
 
             Spacer()
 
+            // Priority indicator — tap to toggle
+            Button {
+                var updated = item
+                updated.priority = item.priority.isHigh ? .medium : .high
+                try? Queries.updateItem(updated)
+            } label: {
+                Image(systemName: item.priority.isHigh ? "arrow.up" : "minus")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(item.priority.isHigh ? Theme.pinkDark : Theme.textMuted)
+                    .frame(width: 20, height: 20)
+            }
+            .buttonStyle(.plain)
+
+            // Decluster — remove from cluster
+            if item.clusterId != nil {
+                Button {
+                    try? Queries.removeFromCluster(itemId: item.id)
+                    onComplete?()
+                } label: {
+                    Text("Decluster")
+                        .font(.inter(9, weight: .medium))
+                        .foregroundStyle(Theme.textMuted)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Theme.softGray, in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+
             // Checkbox on the right
             Button {
                 onComplete?()

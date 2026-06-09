@@ -52,14 +52,6 @@ struct ContentView: View {
         switch appState.selectedDestination {
         case .overview:
             OverviewView(appState: appState)
-        case .actions:
-            ItemListView(appState: appState, category: .action, title: "Actions")
-        case .brainstorms:
-            ItemListView(appState: appState, category: .brainstorm, title: "Brainstorms")
-        case .resources:
-            ItemListView(appState: appState, category: .resource, title: "Resources")
-        case .allItems:
-            ItemListView(appState: appState, category: nil, title: "All Items")
         case .completed:
             ItemListView(appState: appState, category: nil, title: "Completed", showDone: true)
         case .wins:
