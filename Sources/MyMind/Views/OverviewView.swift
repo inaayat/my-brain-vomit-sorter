@@ -164,7 +164,7 @@ struct OverviewView: View {
 
     @ViewBuilder
     private func noClusterFlagRow(_ item: Item) -> some View {
-        flagRow(item, label: "No Cluster", labelBg: Theme.softGray, labelFg: Theme.textMuted)
+        flagRow(item, label: "Unclustered", labelBg: Theme.softGray, labelFg: Theme.textMuted)
     }
 
     @ViewBuilder
