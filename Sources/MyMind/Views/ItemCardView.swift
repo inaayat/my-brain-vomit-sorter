@@ -6,6 +6,7 @@ struct ItemCardView: View {
     var onTap: () -> Void
     var onComplete: (() -> Void)?
     var onDrop: ((String) -> Void)?
+    var onChange: (() -> Void)?
     var onDelete: (() -> Void)?
     @State private var isDropTarget = false
 
@@ -39,16 +40,22 @@ struct ItemCardView: View {
 
             Spacer()
 
-            // Priority indicator — tap to toggle
+            // Priority indicator — tap to cycle: standard → high → backlog → standard
             Button {
                 var updated = item
-                updated.priority = item.priority.isHigh ? .medium : .high
+                switch item.priority {
+                case .medium, .low: updated.priority = .high
+                case .high: updated.priority = .backlog
+                case .backlog: updated.priority = .medium
+                }
                 try? Queries.updateItem(updated)
+                onChange?()
             } label: {
-                Image(systemName: item.priority.isHigh ? "arrow.up" : "minus")
+                Image(systemName: priorityIcon)
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(item.priority.isHigh ? Theme.pinkDark : Theme.textMuted)
-                    .frame(width: 20, height: 20)
+                    .foregroundStyle(priorityFg)
+                    .frame(width: 24, height: 24)
+                    .background(priorityBg, in: Circle())
             }
             .buttonStyle(.plain)
 
@@ -56,7 +63,7 @@ struct ItemCardView: View {
             if item.clusterId != nil {
                 Button {
                     try? Queries.removeFromCluster(itemId: item.id)
-                    onComplete?()
+                    onChange?()
                 } label: {
                     Text("Decluster")
                         .font(.inter(9, weight: .medium))
@@ -101,6 +108,30 @@ struct ItemCardView: View {
             return true
         } isTargeted: { targeted in
             isDropTarget = targeted
+        }
+    }
+
+    private var priorityIcon: String {
+        switch item.priority {
+        case .high: return "arrow.up"
+        case .backlog: return "arrow.down"
+        default: return "arrow.up"
+        }
+    }
+
+    private var priorityFg: Color {
+        switch item.priority {
+        case .high: return .white
+        case .backlog: return .white
+        default: return Theme.textMuted
+        }
+    }
+
+    private var priorityBg: Color {
+        switch item.priority {
+        case .high: return Theme.pink
+        case .backlog: return Theme.yellow
+        default: return Theme.softGray
         }
     }
 

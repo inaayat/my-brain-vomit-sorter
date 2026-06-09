@@ -13,6 +13,11 @@ struct InlineCaptureView: View {
     @State private var urlTitleText = ""
     @State private var isSaving = false
     @State private var savedMessage = ""
+    @State private var clusterSearch = ""
+    @State private var selectedClusterId: String?
+    @State private var selectedResourceId: String?
+    @State private var allClusters: [Cluster] = []
+    @State private var allResources: [Item] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -29,7 +34,11 @@ struct InlineCaptureView: View {
                     .frame(minHeight: 20, maxHeight: 120)
                     .fixedSize(horizontal: false, vertical: true)
                     .onChange(of: text) { _, newValue in
-                        if !newValue.isEmpty && !expanded { expanded = true }
+                        if !newValue.isEmpty && !expanded {
+                            expanded = true
+                            allClusters = (try? Queries.getAllClustersWithItems()) ?? []
+                            allResources = (try? Queries.getItems(category: .resource, done: false, limit: 50)) ?? []
+                        }
                     }
                     .overlay(alignment: .topLeading) {
                         if text.isEmpty {
@@ -96,6 +105,60 @@ struct InlineCaptureView: View {
                         .controlSize(.small)
                         .foregroundStyle(Theme.textMuted)
                     }
+
+                    // Cluster + Resource linking row
+                    HStack(spacing: 12) {
+                        // Add to cluster
+                        HStack(spacing: 4) {
+                            Image(systemName: "rectangle.3.group")
+                                .font(.system(size: 10))
+                                .foregroundStyle(Theme.yellowDark)
+                            TextField("Add to cluster...", text: $clusterSearch)
+                                .textFieldStyle(.roundedBorder)
+                                .controlSize(.small)
+                                .frame(maxWidth: 160)
+                                .onChange(of: clusterSearch) { _, _ in
+                                    allClusters = (try? Queries.getAllClustersWithItems()) ?? []
+                                }
+                        }
+
+                        // Filtered cluster suggestions
+                        if !clusterSearch.isEmpty {
+                            let matches = allClusters.filter { $0.title.localizedCaseInsensitiveContains(clusterSearch) }
+                            ForEach(matches.prefix(3)) { cluster in
+                                Button {
+                                    selectedClusterId = cluster.id
+                                    clusterSearch = cluster.title
+                                } label: {
+                                    Text(cluster.title)
+                                        .font(.inter(9, weight: .medium))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 3)
+                                        .background(selectedClusterId == cluster.id ? Theme.yellowTint : Theme.softGray, in: Capsule())
+                                        .foregroundStyle(Theme.textPrimary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+
+                        Divider().frame(height: 16)
+
+                        // Link to existing resource
+                        HStack(spacing: 4) {
+                            Image(systemName: "link")
+                                .font(.system(size: 10))
+                                .foregroundStyle(Theme.blueDark)
+                            Picker("Resource", selection: $selectedResourceId) {
+                                Text("Link resource...").tag(nil as String?)
+                                ForEach(allResources) { resource in
+                                    Text(resource.urlTitle ?? resource.text)
+                                        .tag(resource.id as String?)
+                                }
+                            }
+                            .frame(maxWidth: 180)
+                            .controlSize(.small)
+                        }
+                    }
                 }
                 .padding(.horizontal, 12)
                 .transition(.opacity.combined(with: .move(edge: .top)))
@@ -151,6 +214,17 @@ struct InlineCaptureView: View {
             }
             try? Queries.addItem(item)
 
+            // Assign to cluster if selected
+            if let clusterId = selectedClusterId {
+                try? Queries.assignToCluster(itemId: item.id, clusterId: clusterId)
+            }
+
+            // Link to existing resource if selected
+            if let resourceId = selectedResourceId {
+                let link = Link.new(fromId: item.id, toId: resourceId)
+                try? Queries.addLink(link)
+            }
+
             // If URL provided and category is NOT resource, also create a linked resource item
             if !trimmedUrl.isEmpty && (category ?? .brainstorm) != .resource {
                 let resourceItem = Item.new(
@@ -164,8 +238,11 @@ struct InlineCaptureView: View {
                 try? Queries.addLink(link)
             }
 
-            Task {
-                _ = try? await AIService.classifyAndCluster(text: finalText, itemId: item.id, category: item.category)
+            // Auto-cluster only if not manually assigned
+            if selectedClusterId == nil {
+                Task {
+                    _ = try? await AIService.classifyAndCluster(text: finalText, itemId: item.id, category: item.category)
+                }
             }
 
             await MainActor.run {
@@ -190,6 +267,9 @@ struct InlineCaptureView: View {
         dueDate = Date()
         urlText = ""
         urlTitleText = ""
+        clusterSearch = ""
+        selectedClusterId = nil
+        selectedResourceId = nil
         expanded = false
     }
 }

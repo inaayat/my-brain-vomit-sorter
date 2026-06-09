@@ -4,7 +4,7 @@ struct OverviewView: View {
     @Bindable var appState: AppState
     @State private var allItems: [Item] = []
     @State private var allClusters: [Cluster] = []
-    @State private var activeFilter: Category?
+    @State private var activeFilter: Category? = .action
     @State private var counts: [Category: Int] = [:]
 
     var body: some View {
@@ -62,52 +62,116 @@ struct OverviewView: View {
 
     private var itemFeed: some View {
         LazyVStack(alignment: .leading, spacing: 8) {
-            // Show clusters that match the filter
-            let filteredClusters = clustersForFilter()
-            ForEach(filteredClusters) { cluster in
-                ClusterCardView(cluster: cluster, onTap: {}, onDropItem: { draggedId in
-                    appState.addToClusterFromDrop(draggedId: draggedId, clusterId: cluster.id)
-                    reload()
-                }, onChanged: { reload() }, onItemComplete: { itemId in
-                    try? Queries.completeItem(id: itemId)
-                    reload()
-                    appState.refreshCounts()
-                }, onItemTap: { itemId in
-                    appState.navigate(to: .itemDetail(itemId))
-                })
-            }
-
-            // Show unclustered items matching filter
-            let items = filteredItems()
-            ForEach(items) { item in
-                ItemCardView(item: item) {
-                    appState.navigate(to: .itemDetail(item.id))
-                } onComplete: {
-                    try? Queries.completeItem(id: item.id)
-                    reload()
-                    appState.refreshCounts()
-                } onDrop: { draggedId in
-                    appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
-                    reload()
+            if activeFilter == nil {
+                // "All Open" — flat list, no clusters, just sorted items
+                let items = allOpenItems()
+                ForEach(items) { item in
+                    ItemCardView(item: item) {
+                        appState.navigate(to: .itemDetail(item.id))
+                    } onComplete: {
+                        try? Queries.completeItem(id: item.id)
+                        reload()
+                        appState.refreshCounts()
+                    } onDrop: { draggedId in
+                        appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
+                        reload()
+                    } onChange: {
+                        reload()
+                    }
                 }
-            }
+                if items.isEmpty {
+                    Text("No items yet. Capture a thought above!")
+                        .font(.inter(13))
+                        .foregroundStyle(Theme.textMuted)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 40)
+                }
+            } else {
+                // Filtered by category — show clusters inline
+                let filteredClusters = clustersForFilter()
+                ForEach(filteredClusters) { cluster in
+                    ClusterCardView(cluster: cluster, onTap: {}, onDropItem: { draggedId in
+                        appState.addToClusterFromDrop(draggedId: draggedId, clusterId: cluster.id)
+                        reload()
+                    }, onChanged: { reload() }, onItemComplete: { itemId in
+                        try? Queries.completeItem(id: itemId)
+                        reload()
+                        appState.refreshCounts()
+                    }, onItemTap: { itemId in
+                        appState.navigate(to: .itemDetail(itemId))
+                    })
+                }
 
-            if filteredClusters.isEmpty && items.isEmpty {
-                Text("No items yet. Capture a thought above!")
-                    .font(.inter(13))
-                    .foregroundStyle(Theme.textMuted)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 40)
+                let items = filteredItems()
+                ForEach(items) { item in
+                    ItemCardView(item: item) {
+                        appState.navigate(to: .itemDetail(item.id))
+                    } onComplete: {
+                        try? Queries.completeItem(id: item.id)
+                        reload()
+                        appState.refreshCounts()
+                    } onDrop: { draggedId in
+                        appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
+                        reload()
+                    } onChange: {
+                        reload()
+                    }
+                }
+
+                if filteredClusters.isEmpty && items.isEmpty {
+                    Text("No items here yet.")
+                        .font(.inter(13))
+                        .foregroundStyle(Theme.textMuted)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 40)
+                }
+
+                // Backlog section
+                let backlog = backlogItems()
+                if !backlog.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Backlog")
+                            .font(.inter(14, weight: .semibold))
+                            .foregroundStyle(Theme.yellowDark)
+                            .padding(.top, 16)
+                        ForEach(backlog) { item in
+                            ItemCardView(item: item) {
+                                appState.navigate(to: .itemDetail(item.id))
+                            } onComplete: {
+                                try? Queries.completeItem(id: item.id)
+                                reload()
+                                appState.refreshCounts()
+                            } onDrop: { draggedId in
+                                appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
+                                reload()
+                            } onChange: {
+                                reload()
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
+    private func allOpenItems() -> [Item] {
+        sortItems(allItems.filter { !$0.done && $0.category != .resource })
+    }
+
     private func filteredItems() -> [Item] {
-        var unclustered = allItems.filter { $0.clusterId == nil && !$0.done }
+        var items = allItems.filter { $0.clusterId == nil && !$0.done && !$0.priority.isBacklog }
         if let filter = activeFilter {
-            unclustered = unclustered.filter { $0.category == filter }
+            items = items.filter { $0.category == filter }
         }
-        return sortItems(unclustered)
+        return sortItems(items)
+    }
+
+    private func backlogItems() -> [Item] {
+        var items = allItems.filter { !$0.done && $0.priority.isBacklog }
+        if let filter = activeFilter {
+            items = items.filter { $0.category == filter }
+        }
+        return items.sorted { $0.createdAt < $1.createdAt }
     }
 
     private func sortItems(_ items: [Item]) -> [Item] {
@@ -124,7 +188,7 @@ struct OverviewView: View {
 
     private func clustersForFilter() -> [Cluster] {
         allClusters.compactMap { cluster in
-            var openItems = cluster.items.filter { !$0.done }
+            var openItems = cluster.items.filter { !$0.done && !$0.priority.isBacklog }
             if let filter = activeFilter {
                 openItems = openItems.filter { $0.category == filter }
             }

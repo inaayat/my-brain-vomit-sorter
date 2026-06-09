@@ -17,10 +17,17 @@ enum Category: String, Codable, CaseIterable, DatabaseValueConvertible {
 }
 
 enum Priority: String, Codable, CaseIterable, DatabaseValueConvertible {
-    case high, medium, low
+    case high, medium, low, backlog
 
     var isHigh: Bool { self == .high }
-    var sortOrder: Int { self == .high ? 0 : 1 }
+    var isBacklog: Bool { self == .backlog }
+    var sortOrder: Int {
+        switch self {
+        case .high: return 0
+        case .medium, .low: return 1
+        case .backlog: return 2
+        }
+    }
 }
 
 struct Item: Identifiable, Codable, Equatable {

@@ -14,140 +14,68 @@ struct ClusterCardView: View {
     @State private var isExpanded = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Cluster title — editable
-            HStack(spacing: 8) {
+        HStack(alignment: .center, spacing: 12) {
+            // Left: cluster title box
+            VStack(spacing: 4) {
                 if isEditing {
-                    TextField("Cluster name", text: $editTitle)
-                        .font(.inter(12, weight: .semibold))
+                    TextField("Name", text: $editTitle)
+                        .font(.inter(11, weight: .semibold))
                         .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 200)
+                        .frame(width: 110)
                         .onSubmit { saveTitle() }
-                    Button("Save") { saveTitle() }
-                        .font(.inter(10, weight: .medium))
-                        .controlSize(.small)
-                    Button("Cancel") { isEditing = false }
-                        .font(.inter(10))
+                    Button("Done") { saveTitle() }
+                        .font(.inter(9))
                         .controlSize(.small)
                 } else {
                     Text(cluster.title)
-                        .font(.inter(12, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
+                        .font(.inter(11, weight: .semibold))
+                        .foregroundStyle(Theme.yellowDark)
+                        .lineLimit(3)
+                        .multilineTextAlignment(.center)
                         .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Theme.purple.opacity(0.12), in: Capsule())
-                        .onTapGesture {
+                        .padding(.vertical, 8)
+                        .frame(width: 110)
+                        .background(Color(hex: "#FBF5E3"), in: RoundedRectangle(cornerRadius: 10))
+                        .onTapGesture(count: 2) {
+                            withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
+                        }
+                        .onTapGesture(count: 1) {
                             editTitle = cluster.title
                             isEditing = true
                         }
-                    Text("\(cluster.itemCount)")
-                        .font(.inter(10))
-                        .foregroundStyle(Theme.textMuted)
                 }
-                Spacer()
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
-                } label: {
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(Theme.textMuted)
-                }
-                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 12)
-            .padding(.top, 10)
-            .padding(.bottom, 6)
 
-            // Items connected by a vertical line
+            // Right: items with connector lines
             if isExpanded && !cluster.items.isEmpty {
                 HStack(alignment: .top, spacing: 0) {
-                    // Vertical connector line
+                    // Vertical + horizontal connector lines
                     VStack(spacing: 0) {
                         ForEach(Array(cluster.items.enumerated()), id: \.element.id) { index, _ in
-                            Circle()
-                                .fill(Theme.purple.opacity(0.5))
-                                .frame(width: 6, height: 6)
-                            if index < cluster.items.count - 1 {
-                                Rectangle()
-                                    .fill(Theme.purple.opacity(0.3))
-                                    .frame(width: 2, height: 34)
-                            }
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.2))
+                                .frame(width: 12, height: 1)
+                                .frame(height: 44, alignment: .center)
                         }
                     }
-                    .padding(.leading, 20)
-                    .padding(.top, 10)
+                    .overlay(alignment: .leading) {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.2))
+                            .frame(width: 1)
+                            .padding(.top, 22)
+                            .padding(.bottom, 22)
+                    }
 
-                    // Item pills
-                    VStack(alignment: .leading, spacing: 6) {
+                    // Item cards
+                    VStack(alignment: .leading, spacing: 4) {
                         ForEach(cluster.items) { item in
-                            HStack(spacing: 8) {
-                                CategoryBadge(category: item.category)
-                                Text(item.text)
-                                    .font(.inter(12))
-                                    .foregroundStyle(item.done ? Theme.textMuted : Theme.textPrimary)
-                                    .lineLimit(2)
-                                    .strikethrough(item.done)
-                                Spacer()
-                                // Priority toggle
-                                Button {
-                                    var updated = item
-                                    updated.priority = item.priority.isHigh ? .medium : .high
-                                    try? Queries.updateItem(updated)
-                                    onChanged?()
-                                } label: {
-                                    Image(systemName: item.priority.isHigh ? "arrow.up" : "minus")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundStyle(item.priority.isHigh ? Theme.pinkDark : Theme.textMuted)
-                                        .frame(width: 20, height: 20)
-                                }
-                                .buttonStyle(.plain)
-                                // Decluster
-                                Button {
-                                    try? Queries.removeFromCluster(itemId: item.id)
-                                    onChanged?()
-                                } label: {
-                                    Text("Decluster")
-                                        .font(.inter(9, weight: .medium))
-                                        .foregroundStyle(Theme.textMuted)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Theme.softGray, in: Capsule())
-                                }
-                                .buttonStyle(.plain)
-                                // Complete
-                                Button {
-                                    onItemComplete?(item.id)
-                                } label: {
-                                    Circle()
-                                        .strokeBorder(item.done ? Theme.greenDark : Theme.textMuted, lineWidth: 2)
-                                        .background(item.done ? Circle().fill(Theme.green) : nil)
-                                        .frame(width: 16, height: 16)
-                                        .overlay {
-                                            if item.done {
-                                                Image(systemName: "checkmark")
-                                                    .font(.system(size: 8, weight: .bold))
-                                                    .foregroundStyle(.white)
-                                            }
-                                        }
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(.vertical, 6)
-                            .padding(.horizontal, 10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(itemBackground(item.category), in: RoundedRectangle(cornerRadius: 8))
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                onItemTap?(item.id)
-                            }
+                            itemRow(item)
                         }
                     }
-                    .padding(.leading, 8)
-                    .padding(.trailing, 12)
                 }
-                .padding(.bottom, 10)
             }
         }
+        .padding(8)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(isDropTarget ? Theme.purple : Color.clear, lineWidth: isDropTarget ? 2 : 0)
@@ -159,6 +87,72 @@ struct ClusterCardView: View {
         } isTargeted: { targeted in
             isDropTarget = targeted
         }
+    }
+
+    @ViewBuilder
+    private func itemRow(_ item: Item) -> some View {
+        HStack(spacing: 8) {
+            CategoryBadge(category: item.category)
+            Button { onItemTap?(item.id) } label: {
+                Text(item.category == .resource ? (item.urlTitle ?? item.text) : item.text)
+                    .font(.inter(12))
+                    .foregroundStyle(item.done ? Theme.textMuted : Theme.textPrimary)
+                    .lineLimit(2)
+                    .strikethrough(item.done)
+                    .multilineTextAlignment(.leading)
+            }
+            .buttonStyle(.plain)
+            Spacer()
+            // Priority
+            Button {
+                var updated = item
+                switch item.priority {
+                case .medium, .low: updated.priority = .high
+                case .high: updated.priority = .backlog
+                case .backlog: updated.priority = .medium
+                }
+                try? Queries.updateItem(updated)
+                onChanged?()
+            } label: {
+                Image(systemName: item.priority.isBacklog ? "arrow.down" : "arrow.up")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(item.priority.isHigh || item.priority.isBacklog ? .white : Theme.textMuted)
+                    .frame(width: 20, height: 20)
+                    .background(item.priority.isHigh ? Theme.pink : (item.priority.isBacklog ? Theme.yellow : Theme.softGray), in: Circle())
+            }
+            .buttonStyle(.plain)
+            // Decluster
+            Button {
+                try? Queries.removeFromCluster(itemId: item.id)
+                onChanged?()
+            } label: {
+                Text("Decluster")
+                    .font(.inter(9, weight: .medium))
+                    .foregroundStyle(Theme.textMuted)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Theme.softGray, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            // Complete
+            Button { onItemComplete?(item.id) } label: {
+                Circle()
+                    .strokeBorder(item.done ? Theme.greenDark : Theme.textMuted, lineWidth: 2)
+                    .background(item.done ? Circle().fill(Theme.green) : nil)
+                    .frame(width: 16, height: 16)
+                    .overlay {
+                        if item.done {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+                    }
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, 6)
+        .padding(.horizontal, 10)
+        .background(itemBackground(item.category), in: RoundedRectangle(cornerRadius: 8))
     }
 
     private func itemBackground(_ category: Category) -> Color {
