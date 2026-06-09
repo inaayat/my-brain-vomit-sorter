@@ -192,7 +192,7 @@ struct OverviewView: View {
                 reload()
             }
         }
-        .padding(8)
+        .padding(.horizontal, 8)
     }
 
     private func allOpenItems() -> [Item] {
