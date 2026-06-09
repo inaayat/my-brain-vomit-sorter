@@ -113,18 +113,11 @@ struct OverviewView: View {
                 }
 
                 let items = filteredItems()
-                ForEach(items) { item in
-                    ItemCardView(item: item) {
-                        appState.navigate(to: .itemDetail(item.id))
-                    } onComplete: {
-                        try? Queries.completeItem(id: item.id)
-                        reload()
-                        appState.refreshCounts()
-                    } onDrop: { draggedId in
-                        appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
-                        reload()
-                    } onChange: {
-                        reload()
+                if !items.isEmpty {
+                    VStack(spacing: 4) {
+                        ForEach(items) { item in
+                            noClusterFlagRow(item)
+                        }
                     }
                 }
 
@@ -166,17 +159,26 @@ struct OverviewView: View {
 
     @ViewBuilder
     private func highFlagRow(_ item: Item) -> some View {
+        flagRow(item, label: "High Prio", labelBg: Theme.pink, labelFg: .white)
+    }
+
+    @ViewBuilder
+    private func noClusterFlagRow(_ item: Item) -> some View {
+        flagRow(item, label: "No Cluster", labelBg: Theme.softGray, labelFg: Theme.textMuted)
+    }
+
+    @ViewBuilder
+    private func flagRow(_ item: Item, label: String, labelBg: Color, labelFg: Color) -> some View {
         HStack(alignment: .center, spacing: 12) {
-            Text("High Prio")
+            Text(label)
                 .font(.inter(11, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(labelFg)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
                 .frame(width: 110)
-                .background(Theme.pink, in: RoundedRectangle(cornerRadius: 10))
+                .background(labelBg, in: RoundedRectangle(cornerRadius: 10))
 
-            // Connector spacer — matches ClusterCardView's connector section width
             Color.clear.frame(width: 12)
 
             ItemCardView(item: item) {
