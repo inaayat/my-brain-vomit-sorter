@@ -164,12 +164,12 @@ struct OverviewView: View {
     private func highFlagRow(_ item: Item) -> some View {
         HStack(alignment: .center, spacing: 10) {
             Text("High")
-                .font(.inter(10, weight: .bold))
+                .font(.inter(11, weight: .bold))
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
-                .frame(width: 44)
+                .frame(width: 110)
                 .padding(.vertical, 10)
-                .background(Theme.pink, in: RoundedRectangle(cornerRadius: 8))
+                .background(Theme.pink, in: RoundedRectangle(cornerRadius: 10))
 
             ItemCardView(item: item) {
                 appState.navigate(to: .itemDetail(item.id))
