@@ -13,7 +13,6 @@ struct InlineCaptureView: View {
     @State private var urlTitleText = ""
     @State private var isSaving = false
     @State private var savedMessage = ""
-    @State private var clusterSearch = ""
     @State private var selectedClusterId: String?
     @State private var selectedResourceId: String?
     @State private var allClusters: [Cluster] = []
@@ -108,37 +107,19 @@ struct InlineCaptureView: View {
 
                     // Cluster + Resource linking row
                     HStack(spacing: 12) {
-                        // Add to cluster
+                        // Add to cluster — dropdown
                         HStack(spacing: 4) {
                             Image(systemName: "rectangle.3.group")
                                 .font(.system(size: 10))
                                 .foregroundStyle(Theme.yellowDark)
-                            TextField("Add to cluster...", text: $clusterSearch)
-                                .textFieldStyle(.roundedBorder)
-                                .controlSize(.small)
-                                .frame(maxWidth: 160)
-                                .onChange(of: clusterSearch) { _, _ in
-                                    allClusters = (try? Queries.getAllClustersWithItems()) ?? []
+                            Picker("Cluster", selection: $selectedClusterId) {
+                                Text("Add to cluster...").tag(nil as String?)
+                                ForEach(allClusters) { cluster in
+                                    Text(cluster.title).tag(cluster.id as String?)
                                 }
-                        }
-
-                        // Filtered cluster suggestions
-                        if !clusterSearch.isEmpty {
-                            let matches = allClusters.filter { $0.title.localizedCaseInsensitiveContains(clusterSearch) }
-                            ForEach(matches.prefix(3)) { cluster in
-                                Button {
-                                    selectedClusterId = cluster.id
-                                    clusterSearch = cluster.title
-                                } label: {
-                                    Text(cluster.title)
-                                        .font(.inter(9, weight: .medium))
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 3)
-                                        .background(selectedClusterId == cluster.id ? Theme.yellowTint : Theme.softGray, in: Capsule())
-                                        .foregroundStyle(Theme.textPrimary)
-                                }
-                                .buttonStyle(.plain)
                             }
+                            .frame(maxWidth: 180)
+                            .controlSize(.small)
                         }
 
                         Divider().frame(height: 16)
@@ -267,7 +248,6 @@ struct InlineCaptureView: View {
         dueDate = Date()
         urlText = ""
         urlTitleText = ""
-        clusterSearch = ""
         selectedClusterId = nil
         selectedResourceId = nil
         expanded = false
