@@ -4,7 +4,6 @@ struct GuideView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
-                // Header
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 10) {
                         Image(systemName: "brain.head.profile")
@@ -14,75 +13,54 @@ struct GuideView: View {
                             .font(.inter(28, weight: .bold))
                             .foregroundStyle(Theme.textPrimary)
                     }
-                    Text("Your personal thought capture and organization tool, powered by AI.")
+                    Text("Your personal thought capture and organization tool.")
                         .font(.inter(14))
                         .foregroundStyle(Theme.textMuted)
                 }
 
-                // Quick Start
                 guideSection(title: "Quick Start", color: Theme.purple) {
-                    guideBullet(icon: "plus.bubble.fill", text: "Type in \"Capture a thought...\" to add anything — tasks, ideas, links, notes")
-                    guideBullet(icon: "wand.and.stars", text: "AI auto-categorizes, cleans your text, and groups related items into clusters")
-                    guideBullet(icon: "keyboard", text: "Press Ctrl+Option+M from anywhere to open the quick capture overlay")
+                    guideBullet(icon: "plus.bubble.fill", text: "Type in the capture bar at the top of Overview to add any thought")
+                    guideBullet(icon: "wand.and.stars", text: "AI auto-categorizes into Actions, Brainstorms, or Resources")
+                    guideBullet(icon: "keyboard", text: "Press Ctrl+Option+M from anywhere for the floating capture overlay")
+                    guideBullet(icon: "hand.draw", text: "Drag one item onto another to create a Cluster")
                 }
 
-                // Sections
                 guideSection(title: "Overview", color: Theme.textPrimary) {
-                    guideText("Your dashboard. Shows stat cards for each category, the inline capture bar, and recent items from all sections at a glance. Click any stat card to jump to that section.")
+                    guideText("Your dashboard. Stat cards show counts per category (click to navigate). Below: your items grouped by type with clusters inline.")
                 }
 
                 guideSection(title: "Actions", color: Theme.greenDark) {
-                    guideText("Concrete tasks and to-dos. Each has a checkbox to mark complete. When you complete an action, you'll be prompted to \"Log Win\" — record what you achieved and link to an artifact (PR, doc, etc).")
+                    guideText("Concrete tasks. Each has a checkbox on the right \u{2014} click to complete. On completion you can 'Log Win' to record the achievement.")
                 }
 
                 guideSection(title: "Brainstorms", color: Theme.pinkDark) {
-                    guideText("Ideas, musings, observations, questions. These get auto-clustered by AI into themed groups. Great for capturing random thoughts that may connect later.")
-                }
-
-                guideSection(title: "Revisit", color: Theme.yellowDark) {
-                    guideText("Things to come back to later — topics to research, decisions to reconsider, items that aren't actionable yet but shouldn't be forgotten.")
+                    guideText("Ideas, observations, questions. Auto-clustered by AI into themed groups. Drag items onto each other to manually cluster.")
                 }
 
                 guideSection(title: "Resources", color: Theme.blueDark) {
-                    guideText("URLs, links, and references. Any item with a URL shows here — the link is displayed prominently with the domain extracted. Good for articles, docs, and tools to remember.")
+                    guideText("URLs and links. When you add a URL to any item, a Resource is auto-created. Shows the URL title (display name) with a clickable link.")
                 }
 
-                guideSection(title: "Clusters", color: Theme.purple) {
-                    guideText("AI groups related items automatically. The Clusters view lets you browse all clusters, rename them, merge similar ones, delete unused ones, or manually assign unclustered items to a group.")
+                guideSection(title: "Clusters", color: Theme.yellowDark) {
+                    guideText("Groups of related items across any category. Create by dragging items together. Click the title to rename. Expand/collapse with the chevron. Merge clusters from the Clusters page.")
                 }
 
                 guideSection(title: "Wins", color: Theme.yellowDark) {
-                    guideText("Your brag doc. When you complete a task, log what you achieved and link to the artifact. Over time this builds a record of your impact — great for reviews and 1:1s.")
+                    guideText("Your brag doc. When completing a task, log what you achieved + link to an artifact (PR, doc, etc). Builds over time for reviews and 1:1s.")
                 }
 
-                guideSection(title: "Ask AI", color: Theme.purple) {
-                    guideText("Ask questions about everything you've stored. \"What tasks are overdue?\", \"Summarize my brainstorms about auth\", \"What did I capture last week?\" — the AI searches across all your items to answer.")
+                guideSection(title: "Shortcuts", color: Theme.textMuted) {
+                    shortcutRow(keys: "Ctrl + Option + M", description: "Floating capture overlay from anywhere")
                 }
 
-                // AI Features
-                guideSection(title: "AI Features", color: Theme.pinkDark) {
-                    guideBullet(icon: "tag.fill", text: "Auto-categorize: AI picks the right category, generates tags, and cleans up your text")
-                    guideBullet(icon: "rectangle.3.group", text: "Auto-cluster: Related items get grouped together with an AI-generated title and summary")
-                    guideBullet(icon: "magnifyingglass", text: "Ask AI: Full-text question answering over all your stored items")
-                    guideBullet(icon: "star.fill", text: "Log Win: Prompted after completing tasks to build your achievement record")
-                }
-
-                // Keyboard Shortcuts
-                guideSection(title: "Shortcuts", color: Theme.textSecondary) {
-                    shortcutRow(keys: "Ctrl + Option + M", description: "Open quick capture overlay from anywhere")
-                    shortcutRow(keys: "Cmd + N", description: "Jump to capture bar")
-                }
-
-                // Config
-                guideSection(title: "Setup", color: Theme.textMuted) {
-                    guideText("AI features require an Anthropic API key. Add it to:")
-                    Text("~/.my-mind/config.json")
-                        .font(.inter(12, weight: .medium))
-                        .padding(8)
-                        .background(Theme.softGray, in: RoundedRectangle(cornerRadius: 6))
+                guideSection(title: "AI Setup", color: Theme.textMuted) {
+                    guideText("Add your Anthropic key to ~/.my-mind/config.json:")
                     Text("{\"apiKey\": \"sk-ant-...\"}")
                         .font(.inter(11))
                         .foregroundStyle(Theme.textMuted)
+                        .padding(8)
+                        .background(Theme.softGray, in: RoundedRectangle(cornerRadius: 6))
+                    guideText("Or install Ollama for free local AI: brew install ollama && ollama pull llama3.2")
                 }
             }
             .padding(28)

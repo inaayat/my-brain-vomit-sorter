@@ -16,12 +16,24 @@ struct ItemCardView: View {
 
             // Text in the middle — tap to open detail
             Button(action: onTap) {
-                Text(item.text)
-                    .font(.inter(13))
-                    .foregroundStyle(item.done ? Theme.textMuted : Theme.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .strikethrough(item.done)
-                    .multilineTextAlignment(.leading)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(displayText)
+                        .font(.inter(13))
+                        .foregroundStyle(item.done ? Theme.textMuted : Theme.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .strikethrough(item.done)
+                        .multilineTextAlignment(.leading)
+                    if item.category == .resource, let url = item.url, !url.isEmpty {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 8))
+                            Text(URL(string: url)?.host?.replacingOccurrences(of: "www.", with: "") ?? url)
+                                .lineLimit(1)
+                        }
+                        .font(.inter(10))
+                        .foregroundStyle(Theme.blueDark)
+                    }
+                }
             }
             .buttonStyle(.plain)
 
@@ -61,6 +73,13 @@ struct ItemCardView: View {
         } isTargeted: { targeted in
             isDropTarget = targeted
         }
+    }
+
+    private var displayText: String {
+        if item.category == .resource, let title = item.urlTitle, !title.isEmpty {
+            return title
+        }
+        return item.text
     }
 
     private var cardBackground: Color {

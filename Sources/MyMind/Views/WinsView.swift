@@ -15,7 +15,7 @@ struct WinsView: View {
                 Spacer()
                 Text("\(wins.count) logged")
                     .font(.inter(11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.textMuted)
             }
             .padding(.horizontal, 24)
             .padding(.top, 20)
@@ -28,10 +28,10 @@ struct WinsView: View {
                         .foregroundStyle(.yellow.opacity(0.5))
                     Text("No wins logged yet")
                         .font(.inter(13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.textMuted)
                     Text("Complete action items and log your wins!")
                         .font(.inter(11))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(Theme.textMuted)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {

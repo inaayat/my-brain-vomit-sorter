@@ -5,12 +5,9 @@ enum NavigationDestination: Hashable {
     case overview
     case actions
     case brainstorms
-    case revisit
     case resources
     case allItems
     case completed
-    case askAI
-    case focus
     case wins
     case clusters
     case guide
@@ -31,7 +28,6 @@ final class AppState {
         }
     }
     var counts: [String: Int] = [:]
-    var showCaptureSheet = false
     var showEditSheet = false
     var showLogWinSheet = false
     var completedItem: Item?

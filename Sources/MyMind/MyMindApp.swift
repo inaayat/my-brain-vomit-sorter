@@ -16,14 +16,6 @@ struct MyMindApp: App {
             }
             .keyboardShortcut("m", modifiers: [.control, .option])
             Divider()
-            Button("Capture a thought...") {
-                showMainWindow()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    NotificationCenter.default.post(name: .showCaptureSheet, object: nil)
-                }
-            }
-            .keyboardShortcut("n", modifiers: [.command])
-            Divider()
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }
@@ -41,9 +33,6 @@ struct MyMindApp: App {
     }
 }
 
-extension Notification.Name {
-    static let showCaptureSheet = Notification.Name("showCaptureSheet")
-}
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {

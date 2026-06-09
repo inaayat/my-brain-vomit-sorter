@@ -48,38 +48,20 @@ struct ItemListView: View {
                     if displayItems.isEmpty && vm.clusters.isEmpty {
                         Text("Nothing here yet")
                             .font(.inter(13))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.textMuted)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, 40)
                     } else {
                         ForEach(displayItems) { item in
-                            if category == .resource {
-                                ResourceCardView(item: item) {
-                                    appState.navigate(to: .itemDetail(item.id))
-                                } onDrop: { draggedId in
-                                    appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
-                                    reload()
-                                }
-                            } else {
-                                ItemCardView(item: item) {
-                                    appState.navigate(to: .itemDetail(item.id))
-                                } onComplete: {
-                                    let wasAction = item.category == .action && !item.done
-                                    vm.toggleComplete(item: item)
-                                    reload()
-                                    appState.refreshCounts()
-                                    if wasAction {
-                                        appState.completedItem = item
-                                        appState.showLogWinSheet = true
-                                    }
-                                } onDrop: { draggedId in
-                                    appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
-                                    reload()
-                                } onDelete: {
-                                    vm.deleteItem(id: item.id)
-                                    reload()
-                                    appState.refreshCounts()
-                                }
+                            ItemCardView(item: item) {
+                                appState.navigate(to: .itemDetail(item.id))
+                            } onComplete: {
+                                vm.toggleComplete(item: item)
+                                reload()
+                                appState.refreshCounts()
+                            } onDrop: { draggedId in
+                                appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
+                                reload()
                             }
                         }
                     }

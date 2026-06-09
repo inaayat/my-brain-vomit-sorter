@@ -13,7 +13,7 @@ struct LogWinSheet: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Image(systemName: "star.fill")
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(Theme.yellowDark)
                     .font(.inter(17, weight: .semibold))
                 Text("Log Win")
                     .font(.inter(15, weight: .semibold))
@@ -23,20 +23,20 @@ struct LogWinSheet: View {
                     dismiss()
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.textMuted)
                 .controlSize(.small)
             }
 
             Text(item.text)
                 .font(.inter(13))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.textMuted)
                 .lineLimit(2)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("Artifact")
                     .font(.inter(11))
                     .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.textMuted)
                 TextField("Link to PR, doc, dashboard...", text: $artifact)
                     .textFieldStyle(.roundedBorder)
             }
@@ -45,7 +45,7 @@ struct LogWinSheet: View {
                 Text("Value Add")
                     .font(.inter(11))
                     .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.textMuted)
                 TextField("What did completing this achieve?", text: $valueAdd)
                     .textFieldStyle(.roundedBorder)
             }
@@ -60,7 +60,7 @@ struct LogWinSheet: View {
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.yellow)
+                .tint(Theme.yellowDark)
                 .controlSize(.regular)
                 .disabled(artifact.trimmingCharacters(in: .whitespaces).isEmpty && valueAdd.trimmingCharacters(in: .whitespaces).isEmpty)
             }

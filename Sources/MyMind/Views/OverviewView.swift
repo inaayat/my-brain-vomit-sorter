@@ -19,65 +19,12 @@ struct OverviewView: View {
         .onAppear { vm.load() }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(vm.greeting)
-                .font(.inter(28, weight: .bold))
-                .foregroundStyle(Theme.textPrimary)
-            Text(vm.todayString)
-                .font(.inter(13))
-                .foregroundStyle(Theme.textMuted)
-        }
-    }
-
     private var statCards: some View {
         HStack(spacing: 16) {
             StatCard(title: "Actions", value: vm.openActions.count, icon: "bolt.fill", color: Theme.greenDark, tint: Theme.greenTint, onTap: { appState.selectedDestination = .actions })
             StatCard(title: "Brainstorms", value: vm.brainstorms.count, icon: "cloud.bolt.fill", color: Theme.pinkDark, tint: Theme.pinkTint, onTap: { appState.selectedDestination = .brainstorms })
             StatCard(title: "Resources", value: vm.resources.count, icon: "bookmark.fill", color: Theme.blueDark, tint: Theme.blueTint, onTap: { appState.selectedDestination = .resources })
             StatCard(title: "Completed", value: appState.counts["completed"] ?? 0, icon: "checkmark.circle.fill", color: Theme.yellowDark, tint: Theme.yellowTint, onTap: { appState.selectedDestination = .completed })
-        }
-    }
-
-    private var focusSection: some View {
-        DashboardSection(title: "AI Focus", icon: "sparkle", color: Theme.purple, tint: Theme.pinkTint) {
-            HStack {
-                Spacer()
-                Button {
-                    vm.loadFocus()
-                } label: {
-                    Text("Get Focus")
-                        .font(.inter(11))
-                        .fontWeight(.medium)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.purple)
-                .controlSize(.small)
-                .disabled(vm.isLoadingFocus)
-            }
-
-            if vm.isLoadingFocus {
-                ProgressView("Thinking...")
-                    .font(.inter(11))
-                    .foregroundStyle(Theme.textMuted)
-            } else if !vm.focusSummary.isEmpty {
-                Text(vm.focusSummary)
-                    .font(.inter(13))
-                    .foregroundStyle(Theme.purple)
-                    .padding(10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Theme.pinkTint.opacity(0.2), in: RoundedRectangle(cornerRadius: 8))
-
-                ForEach(vm.focusItems, id: \.item.id) { entry in
-                    FocusItemRow(item: entry.item, reason: entry.reason) {
-                        try? Queries.completeItem(id: entry.item.id)
-                        vm.load()
-                        appState.refreshCounts()
-                    } onTap: {
-                        appState.navigate(to: .itemDetail(entry.item.id))
-                    }
-                }
-            }
         }
     }
 
@@ -163,22 +110,6 @@ struct OverviewView: View {
                     .foregroundStyle(Theme.textMuted)
             } else {
                 ForEach(vm.resources.prefix(5)) { item in
-                    ResourceCardView(item: item) {
-                        appState.navigate(to: .itemDetail(item.id))
-                    }
-                }
-            }
-        }
-    }
-
-    private var revisitSection: some View {
-        DashboardSection(title: "Revisit", icon: "arrow.counterclockwise.circle.fill", color: Theme.yellowDark, tint: Theme.yellowTint) {
-            if vm.revisits.isEmpty {
-                Text("Nothing to revisit")
-                    .font(.inter(11))
-                    .foregroundStyle(Theme.textMuted)
-            } else {
-                ForEach(vm.revisits.prefix(5)) { item in
                     ItemCardView(item: item, compact: true) {
                         appState.navigate(to: .itemDetail(item.id))
                     } onComplete: {
@@ -186,17 +117,14 @@ struct OverviewView: View {
                         vm.load()
                         appState.refreshCounts()
                     } onDrop: { draggedId in
-                    appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
-                    vm.load()
-                } onDelete: {
-                        try? Queries.deleteItem(id: item.id)
+                        appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
                         vm.load()
-                        appState.refreshCounts()
                     }
                 }
             }
         }
     }
+
 }
 
 // MARK: - Dashboard Components
@@ -263,37 +191,3 @@ struct DashboardSection<Content: View>: View {
     }
 }
 
-struct FocusItemRow: View {
-    let item: Item
-    let reason: String
-    let onComplete: () -> Void
-    let onTap: () -> Void
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Button(action: onComplete) {
-                Circle()
-                    .strokeBorder(Theme.purple, lineWidth: 2)
-                    .frame(width: 16, height: 16)
-            }
-            .buttonStyle(.plain)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.text)
-                    .font(.inter(13))
-                    .foregroundStyle(Theme.textPrimary)
-                    .lineLimit(2)
-                if !reason.isEmpty {
-                    Text(reason)
-                        .font(.inter(11))
-                        .foregroundStyle(Theme.purple)
-                        .italic()
-                }
-            }
-            .onTapGesture(perform: onTap)
-
-            Spacer()
-        }
-        .padding(.vertical, 4)
-    }
-}

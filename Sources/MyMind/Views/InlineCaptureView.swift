@@ -94,7 +94,7 @@ struct InlineCaptureView: View {
                             reset()
                         }
                         .controlSize(.small)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.textMuted)
                     }
                 }
                 .padding(.horizontal, 12)

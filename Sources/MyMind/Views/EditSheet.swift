@@ -10,6 +10,7 @@ struct EditSheet: View {
     @State private var dueDate: Date = Date()
     @State private var hasDueDate = false
     @State private var urlText: String = ""
+    @State private var urlTitleText: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -20,17 +21,16 @@ struct EditSheet: View {
                 .font(.inter(14))
                 .frame(minHeight: 80, maxHeight: 120)
                 .padding(4)
-                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 6))
+                .background(Theme.softGray.opacity(0.3), in: RoundedRectangle(cornerRadius: 6))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("CATEGORY")
                     .font(.inter(10))
                     .fontWeight(.bold)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.textMuted)
                 HStack(spacing: 6) {
                     PillButton(label: "Brainstorm", isSelected: selectedCategory == .brainstorm) { selectedCategory = .brainstorm }
                     PillButton(label: "Action", isSelected: selectedCategory == .action) { selectedCategory = .action }
-                    PillButton(label: "Revisit", isSelected: selectedCategory == .revisit) { selectedCategory = .revisit }
                     PillButton(label: "Resource", isSelected: selectedCategory == .resource) { selectedCategory = .resource }
                 }
             }
@@ -45,12 +45,16 @@ struct EditSheet: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("LINK OR RESOURCE (optional)")
+                Text("LINK")
                     .font(.inter(10))
                     .fontWeight(.bold)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.textMuted)
                 TextField("Paste a URL...", text: $urlText)
                     .textFieldStyle(.roundedBorder)
+                if !urlText.trimmingCharacters(in: .whitespaces).isEmpty {
+                    TextField("URL title (display name)...", text: $urlTitleText)
+                        .textFieldStyle(.roundedBorder)
+                }
             }
 
             HStack {
@@ -71,15 +75,19 @@ struct EditSheet: View {
             hasDueDate = item.dueDate != nil
             dueDate = item.dueDate ?? Date()
             urlText = item.url ?? ""
+            urlTitleText = item.urlTitle ?? ""
         }
     }
 
     private func save() {
+        let trimmedUrl = urlText.trimmingCharacters(in: .whitespaces)
+        let trimmedUrlTitle = urlTitleText.trimmingCharacters(in: .whitespaces)
         var updated = item
         updated.text = text.trimmingCharacters(in: .whitespaces)
         updated.category = selectedCategory
         updated.dueDate = hasDueDate ? dueDate : nil
-        updated.url = urlText.isEmpty ? nil : urlText
+        updated.url = trimmedUrl.isEmpty ? nil : trimmedUrl
+        updated.urlTitle = trimmedUrlTitle.isEmpty ? nil : trimmedUrlTitle
         try? Queries.updateItem(updated)
         appState.refreshCounts()
         dismiss()

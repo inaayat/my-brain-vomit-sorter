@@ -57,7 +57,7 @@ struct QuickCaptureOverlay: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 12) {
                 Image(systemName: "plus.bubble.fill")
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(Theme.purple)
                     .font(.title3)
 
                 TextField("Capture a thought...", text: $text)
@@ -70,19 +70,19 @@ struct QuickCaptureOverlay: View {
                     ProgressView().controlSize(.small)
                 } else if !savedMessage.isEmpty {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Theme.green)
                 } else if !text.trimmingCharacters(in: .whitespaces).isEmpty {
                     Button { save() } label: {
                         Image(systemName: "arrow.up.circle.fill")
                             .font(.title2)
-                            .foregroundStyle(.indigo)
+                            .foregroundStyle(Theme.purple)
                     }
                     .buttonStyle(.plain)
                 }
 
                 Button { onDismiss() } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.textMuted)
                         .font(.title3)
                 }
                 .buttonStyle(.plain)
@@ -96,7 +96,6 @@ struct QuickCaptureOverlay: View {
                     PillButton(label: "Auto", isSelected: selectedCategory == nil) { selectedCategory = nil }
                     PillButton(label: "Action", isSelected: selectedCategory == .action) { selectedCategory = .action }
                     PillButton(label: "Brainstorm", isSelected: selectedCategory == .brainstorm) { selectedCategory = .brainstorm }
-                    PillButton(label: "Revisit", isSelected: selectedCategory == .revisit) { selectedCategory = .revisit }
                     PillButton(label: "Resource", isSelected: selectedCategory == .resource) { selectedCategory = .resource }
                     Spacer()
                 }
@@ -139,6 +138,15 @@ struct QuickCaptureOverlay: View {
                 item.tags = try? String(data: JSONEncoder().encode(tags), encoding: .utf8)
             }
             try? Queries.addItem(item)
+
+            if let urlMatch = finalText.range(of: #"https?://\S+"#, options: .regularExpression),
+               (category ?? .brainstorm) != .resource {
+                let url = String(finalText[urlMatch])
+                let resourceItem = Item.new(text: url, category: .resource, url: url)
+                try? Queries.addItem(resourceItem)
+                let link = Link.new(fromId: item.id, toId: resourceItem.id)
+                try? Queries.addLink(link)
+            }
 
             Task { _ = try? await AIService.classifyAndCluster(text: finalText, itemId: item.id, category: item.category) }
 

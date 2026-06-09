@@ -70,3 +70,22 @@ extension Color {
         )
     }
 }
+
+struct PillButton: View {
+    let label: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.inter(11, weight: .medium))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(isSelected ? Theme.purple : Color.clear, in: Capsule())
+                .foregroundStyle(isSelected ? .white : Theme.textPrimary)
+                .overlay(Capsule().strokeBorder(Theme.divider, lineWidth: isSelected ? 0 : 1))
+        }
+        .buttonStyle(.plain)
+    }
+}

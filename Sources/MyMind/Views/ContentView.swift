@@ -26,9 +26,6 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.25), value: appState.detailPanelItemId)
         .frame(minWidth: 800, minHeight: 560)
         .preferredColorScheme(.light)
-        .sheet(isPresented: $appState.showCaptureSheet) {
-            CaptureSheet(appState: appState)
-        }
         .sheet(isPresented: $appState.showEditSheet) {
             if let item = appState.editingItem {
                 EditSheet(appState: appState, item: item)
@@ -59,18 +56,12 @@ struct ContentView: View {
             ItemListView(appState: appState, category: .action, title: "Actions")
         case .brainstorms:
             ItemListView(appState: appState, category: .brainstorm, title: "Brainstorms")
-        case .revisit:
-            ItemListView(appState: appState, category: .revisit, title: "Revisit")
         case .resources:
             ItemListView(appState: appState, category: .resource, title: "Resources")
         case .allItems:
             ItemListView(appState: appState, category: nil, title: "All Items")
         case .completed:
             ItemListView(appState: appState, category: nil, title: "Completed", showDone: true)
-        case .askAI:
-            AskAIView()
-        case .focus:
-            FocusView()
         case .wins:
             WinsView(appState: appState)
         case .clusters:
