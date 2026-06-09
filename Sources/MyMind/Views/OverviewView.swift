@@ -87,6 +87,31 @@ struct OverviewView: View {
                         .padding(.top, 40)
                 }
             } else {
+                // High Priority section
+                let highItems = highPriorityItems()
+                if !highItems.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("High Priority")
+                            .font(.inter(14, weight: .semibold))
+                            .foregroundStyle(Theme.pinkDark)
+                        ForEach(highItems) { item in
+                            ItemCardView(item: item) {
+                                appState.navigate(to: .itemDetail(item.id))
+                            } onComplete: {
+                                try? Queries.completeItem(id: item.id)
+                                reload()
+                                appState.refreshCounts()
+                            } onDrop: { draggedId in
+                                appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
+                                reload()
+                            } onChange: {
+                                reload()
+                            }
+                        }
+                    }
+                    .padding(.bottom, 8)
+                }
+
                 // Filtered by category — show clusters inline
                 let filteredClusters = clustersForFilter()
                 ForEach(filteredClusters) { cluster in
@@ -158,8 +183,16 @@ struct OverviewView: View {
         sortItems(allItems.filter { !$0.done && $0.category != .resource })
     }
 
+    private func highPriorityItems() -> [Item] {
+        var items = allItems.filter { !$0.done && $0.priority.isHigh }
+        if let filter = activeFilter {
+            items = items.filter { $0.category == filter }
+        }
+        return items.sorted { $0.createdAt < $1.createdAt }
+    }
+
     private func filteredItems() -> [Item] {
-        var items = allItems.filter { $0.clusterId == nil && !$0.done && !$0.priority.isBacklog }
+        var items = allItems.filter { $0.clusterId == nil && !$0.done && !$0.priority.isBacklog && !$0.priority.isHigh }
         if let filter = activeFilter {
             items = items.filter { $0.category == filter }
         }
@@ -188,7 +221,7 @@ struct OverviewView: View {
 
     private func clustersForFilter() -> [Cluster] {
         allClusters.compactMap { cluster in
-            var openItems = cluster.items.filter { !$0.done && !$0.priority.isBacklog }
+            var openItems = cluster.items.filter { !$0.done && !$0.priority.isBacklog && !$0.priority.isHigh }
             if let filter = activeFilter {
                 openItems = openItems.filter { $0.category == filter }
             }
