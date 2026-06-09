@@ -87,29 +87,10 @@ struct OverviewView: View {
                         .padding(.top, 40)
                 }
             } else {
-                // High Priority section
+                // High priority items — flag on left, inline with rest of feed
                 let highItems = highPriorityItems()
-                if !highItems.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("High Priority")
-                            .font(.inter(14, weight: .semibold))
-                            .foregroundStyle(Theme.pinkDark)
-                        ForEach(highItems) { item in
-                            ItemCardView(item: item) {
-                                appState.navigate(to: .itemDetail(item.id))
-                            } onComplete: {
-                                try? Queries.completeItem(id: item.id)
-                                reload()
-                                appState.refreshCounts()
-                            } onDrop: { draggedId in
-                                appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
-                                reload()
-                            } onChange: {
-                                reload()
-                            }
-                        }
-                    }
-                    .padding(.bottom, 8)
+                ForEach(highItems) { item in
+                    highFlagRow(item)
                 }
 
                 // Filtered by category — show clusters inline
@@ -175,6 +156,32 @@ struct OverviewView: View {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func highFlagRow(_ item: Item) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            Text("High")
+                .font(.inter(10, weight: .bold))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+                .frame(width: 44)
+                .padding(.vertical, 10)
+                .background(Theme.pink, in: RoundedRectangle(cornerRadius: 8))
+
+            ItemCardView(item: item) {
+                appState.navigate(to: .itemDetail(item.id))
+            } onComplete: {
+                try? Queries.completeItem(id: item.id)
+                reload()
+                appState.refreshCounts()
+            } onDrop: { draggedId in
+                appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
+                reload()
+            } onChange: {
+                reload()
             }
         }
     }
