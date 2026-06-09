@@ -7,6 +7,8 @@ struct ClusterCardView: View {
     var onChanged: (() -> Void)?
     var onItemComplete: ((String) -> Void)?
     var onItemTap: ((String) -> Void)?
+    var expandAllCounter: Int = 0
+    var collapseAllCounter: Int = 0
 
     @State private var isDropTarget = false
     @State private var isEditing = false
@@ -14,8 +16,58 @@ struct ClusterCardView: View {
     @State private var isExpanded = true
 
     var body: some View {
+        Group {
+            if isExpanded {
+                expandedLayout
+            } else {
+                collapsedBar
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: isExpanded)
+        .onChange(of: expandAllCounter) { withAnimation(.easeInOut(duration: 0.25)) { isExpanded = true } }
+        .onChange(of: collapseAllCounter) { withAnimation(.easeInOut(duration: 0.25)) { isExpanded = false } }
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(isDropTarget ? Theme.purple : Color.clear, lineWidth: isDropTarget ? 2 : 0)
+        )
+        .dropDestination(for: String.self) { droppedIds, _ in
+            guard let draggedId = droppedIds.first else { return false }
+            onDropItem?(draggedId)
+            return true
+        } isTargeted: { targeted in
+            isDropTarget = targeted
+        }
+    }
+
+    // MARK: - Collapsed: slim full-width bar
+    private var collapsedBar: some View {
+        HStack {
+            Text(cluster.title)
+                .font(.inter(11, weight: .semibold))
+                .foregroundStyle(Theme.yellowDark)
+            Spacer()
+            Image(systemName: "chevron.down")
+                .font(.system(size: 9))
+                .foregroundStyle(Theme.textMuted)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity)
+        .background(Color(hex: "#FBF5E3"), in: RoundedRectangle(cornerRadius: 8))
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) {
+            editTitle = cluster.title
+            isEditing = true
+        }
+        .onTapGesture(count: 1) {
+            withAnimation(.easeInOut(duration: 0.25)) { isExpanded = true }
+        }
+    }
+
+    // MARK: - Expanded: title left, items right (tree)
+    private var expandedLayout: some View {
         HStack(alignment: .center, spacing: 12) {
-            // Left: cluster title box
+            // Left: title box
             VStack(spacing: 4) {
                 if isEditing {
                     TextField("Name", text: $editTitle)
@@ -36,57 +88,44 @@ struct ClusterCardView: View {
                         .padding(.vertical, 8)
                         .frame(width: 110)
                         .background(Color(hex: "#FBF5E3"), in: RoundedRectangle(cornerRadius: 10))
+                        .contentShape(Rectangle())
                         .onTapGesture(count: 2) {
-                            withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
-                        }
-                        .onTapGesture(count: 1) {
                             editTitle = cluster.title
                             isEditing = true
+                        }
+                        .onTapGesture(count: 1) {
+                            withAnimation(.easeInOut(duration: 0.25)) { isExpanded = false }
                         }
                 }
             }
 
-            // Right: items with connector lines
-            if isExpanded && !cluster.items.isEmpty {
-                HStack(alignment: .top, spacing: 0) {
-                    // Vertical + horizontal connector lines
-                    VStack(spacing: 0) {
-                        ForEach(Array(cluster.items.enumerated()), id: \.element.id) { index, _ in
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(width: 12, height: 1)
-                                .frame(height: 44, alignment: .center)
-                        }
-                    }
-                    .overlay(alignment: .leading) {
+            // Connector lines
+            if !cluster.items.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(Array(cluster.items.enumerated()), id: \.element.id) { index, _ in
                         Rectangle()
                             .fill(Color.gray.opacity(0.2))
-                            .frame(width: 1)
-                            .padding(.top, 22)
-                            .padding(.bottom, 22)
+                            .frame(width: 12, height: 1)
+                            .frame(height: 44, alignment: .center)
                     }
+                }
+                .overlay(alignment: .leading) {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: 1)
+                        .padding(.top, 22)
+                        .padding(.bottom, 22)
+                }
 
-                    // Item cards
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(cluster.items) { item in
-                            itemRow(item)
-                        }
+                // Items
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(cluster.items) { item in
+                        itemRow(item)
                     }
                 }
             }
         }
         .padding(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(isDropTarget ? Theme.purple : Color.clear, lineWidth: isDropTarget ? 2 : 0)
-        )
-        .dropDestination(for: String.self) { droppedIds, _ in
-            guard let draggedId = droppedIds.first else { return false }
-            onDropItem?(draggedId)
-            return true
-        } isTargeted: { targeted in
-            isDropTarget = targeted
-        }
     }
 
     @ViewBuilder
@@ -103,25 +142,7 @@ struct ClusterCardView: View {
             }
             .buttonStyle(.plain)
             Spacer()
-            // Priority
-            Button {
-                var updated = item
-                switch item.priority {
-                case .medium, .low: updated.priority = .high
-                case .high: updated.priority = .backlog
-                case .backlog: updated.priority = .medium
-                }
-                try? Queries.updateItem(updated)
-                onChanged?()
-            } label: {
-                Image(systemName: item.priority.isBacklog ? "arrow.down" : "arrow.up")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(item.priority.isHigh || item.priority.isBacklog ? .white : Theme.textMuted)
-                    .frame(width: 20, height: 20)
-                    .background(item.priority.isHigh ? Theme.pink : (item.priority.isBacklog ? Theme.yellow : Theme.softGray), in: Circle())
-            }
-            .buttonStyle(.plain)
-            // Decluster
+            PriorityPicker(item: item, onChange: { onChanged?() })
             Button {
                 try? Queries.removeFromCluster(itemId: item.id)
                 onChanged?()
@@ -134,7 +155,6 @@ struct ClusterCardView: View {
                     .background(Theme.softGray, in: Capsule())
             }
             .buttonStyle(.plain)
-            // Complete
             Button { onItemComplete?(item.id) } label: {
                 Circle()
                     .strokeBorder(item.done ? Theme.greenDark : Theme.textMuted, lineWidth: 2)

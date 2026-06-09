@@ -6,6 +6,8 @@ struct OverviewView: View {
     @State private var allClusters: [Cluster] = []
     @State private var activeFilter: Category? = .action
     @State private var counts: [Category: Int] = [:]
+    @State private var expandAllCounter = 0
+    @State private var collapseAllCounter = 0
 
     var body: some View {
         ScrollView {
@@ -87,6 +89,32 @@ struct OverviewView: View {
                         .padding(.top, 40)
                 }
             } else {
+                // Expand / Collapse all cluster controls
+                if !allClusters.isEmpty {
+                    HStack(spacing: 14) {
+                        Button { expandAllCounter += 1 } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 8, weight: .semibold))
+                                Text("Expand all")
+                                    .font(.inter(10))
+                            }
+                            .foregroundStyle(Theme.textMuted)
+                        }
+                        .buttonStyle(.plain)
+                        Button { collapseAllCounter += 1 } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 8, weight: .semibold))
+                                Text("Collapse all")
+                                    .font(.inter(10))
+                            }
+                            .foregroundStyle(Theme.textMuted)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
                 // High priority items — flag on left, inline with rest of feed
                 let highItems = highPriorityItems()
                 if !highItems.isEmpty {
@@ -109,7 +137,7 @@ struct OverviewView: View {
                         appState.refreshCounts()
                     }, onItemTap: { itemId in
                         appState.navigate(to: .itemDetail(itemId))
-                    })
+                    }, expandAllCounter: expandAllCounter, collapseAllCounter: collapseAllCounter)
                 }
 
                 let items = filteredItems()
