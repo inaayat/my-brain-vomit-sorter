@@ -89,8 +89,12 @@ struct OverviewView: View {
             } else {
                 // High priority items — flag on left, inline with rest of feed
                 let highItems = highPriorityItems()
-                ForEach(highItems) { item in
-                    highFlagRow(item)
+                if !highItems.isEmpty {
+                    VStack(spacing: 4) {
+                        ForEach(highItems) { item in
+                            highFlagRow(item)
+                        }
+                    }
                 }
 
                 // Filtered by category — show clusters inline
