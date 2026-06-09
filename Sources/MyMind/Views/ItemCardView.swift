@@ -1,0 +1,127 @@
+import SwiftUI
+
+struct ItemCardView: View {
+    let item: Item
+    var compact: Bool = false
+    var onTap: () -> Void
+    var onComplete: (() -> Void)?
+    var onDrop: ((String) -> Void)?
+    var onDelete: (() -> Void)?
+    @State private var isDropTarget = false
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            // Category badge on the left
+            CategoryBadge(category: item.category)
+
+            // Text in the middle — tap to open detail
+            Button(action: onTap) {
+                Text(item.text)
+                    .font(.inter(13))
+                    .foregroundStyle(item.done ? Theme.textMuted : Theme.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .strikethrough(item.done)
+                    .multilineTextAlignment(.leading)
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            // Checkbox on the right
+            Button {
+                onComplete?()
+            } label: {
+                Circle()
+                    .strokeBorder(item.done ? Theme.greenDark : Theme.textMuted, lineWidth: 2)
+                    .background(item.done ? Circle().fill(Theme.green) : nil)
+                    .frame(width: 18, height: 18)
+                    .overlay {
+                        if item.done {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+                    }
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(cardBackground, in: RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(isDropTarget ? Theme.purple : Color.clear, lineWidth: 2)
+        )
+        .draggable(item.id)
+        .dropDestination(for: String.self) { droppedIds, _ in
+            guard let draggedId = droppedIds.first, draggedId != item.id else { return false }
+            onDrop?(draggedId)
+            return true
+        } isTargeted: { targeted in
+            isDropTarget = targeted
+        }
+    }
+
+    private var cardBackground: Color {
+        switch item.category {
+        case .action: return Color(hex: "#EAF2D9")
+        case .brainstorm: return Color(hex: "#FBEAF1")
+        case .revisit: return Color(hex: "#FBF5E3")
+        case .resource: return Color(hex: "#EEF3FB")
+        }
+    }
+
+}
+
+struct CategoryBadge: View {
+    let category: Category
+
+    var body: some View {
+        Image(systemName: icon)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(color)
+            .frame(width: 24, height: 24)
+            .background(tint.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
+    }
+
+    private var icon: String {
+        switch category {
+        case .action: return "bolt.fill"
+        case .brainstorm: return "cloud.bolt.fill"
+        case .revisit: return "arrow.counterclockwise"
+        case .resource: return "link"
+        }
+    }
+
+    private var color: Color {
+        switch category {
+        case .action: return Theme.greenDark
+        case .brainstorm: return Theme.pinkDark
+        case .revisit: return Theme.yellowDark
+        case .resource: return Theme.blueDark
+        }
+    }
+
+    private var tint: Color {
+        switch category {
+        case .action: return Theme.greenTint
+        case .brainstorm: return Theme.pinkTint
+        case .revisit: return Theme.yellowTint
+        case .resource: return Theme.blueTint
+        }
+    }
+}
+
+struct TagBadge: View {
+    let tag: String
+
+    var body: some View {
+        Text(tag)
+            .font(.inter(9, weight: .medium))
+            .foregroundStyle(Theme.textMuted)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(Theme.softGray, in: RoundedRectangle(cornerRadius: 4))
+    }
+}

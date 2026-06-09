@@ -1,0 +1,22 @@
+# Build artifacts
+.build/
+*.o
+*.d
+
+# macOS
+.DS_Store
+*.swp
+
+# User data (database, config with API keys)
+# These live in ~/.my-mind/ not in this repo
+
+# Generated icon intermediates
+icon_set.iconset/
+icon.icns
+make_icon.py
+/tmp/
+
+# Xcode
+*.xcodeproj/
+xcuserdata/
+DerivedData/
