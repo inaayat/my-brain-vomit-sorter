@@ -14,12 +14,41 @@ struct OverviewView: View {
             VStack(alignment: .leading, spacing: 16) {
                 InlineCaptureView(appState: appState) { reload() }
                 filterChips
+                if activeFilter != nil && !allClusters.isEmpty {
+                    expandCollapseControls
+                }
                 itemFeed
             }
             .padding(28)
         }
         .background(Theme.bg)
         .onAppear { reload() }
+    }
+
+    private var expandCollapseControls: some View {
+        HStack(spacing: 14) {
+            Button { expandAllCounter += 1 } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 8, weight: .semibold))
+                    Text("Expand all")
+                        .font(.inter(10))
+                }
+                .foregroundStyle(Theme.textMuted)
+            }
+            .buttonStyle(.plain)
+            Button { collapseAllCounter += 1 } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 8, weight: .semibold))
+                    Text("Collapse all")
+                        .font(.inter(10))
+                }
+                .foregroundStyle(Theme.textMuted)
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var filterChips: some View {
@@ -89,32 +118,6 @@ struct OverviewView: View {
                         .padding(.top, 40)
                 }
             } else {
-                // Expand / Collapse all cluster controls
-                if !allClusters.isEmpty {
-                    HStack(spacing: 14) {
-                        Button { expandAllCounter += 1 } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 8, weight: .semibold))
-                                Text("Expand all")
-                                    .font(.inter(10))
-                            }
-                            .foregroundStyle(Theme.textMuted)
-                        }
-                        .buttonStyle(.plain)
-                        Button { collapseAllCounter += 1 } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 8, weight: .semibold))
-                                Text("Collapse all")
-                                    .font(.inter(10))
-                            }
-                            .foregroundStyle(Theme.textMuted)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-
                 // High priority items — flag on left, inline with rest of feed
                 let highItems = highPriorityItems()
                 if !highItems.isEmpty {
