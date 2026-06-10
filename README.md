@@ -73,10 +73,11 @@ The app checks Ollama first at `localhost:11434` and only falls back to the Anth
 
 ### UX
 - **Global hotkey**: `Ctrl+Option+M` opens a floating capture panel over any app
-- **Menu bar**: Brain icon always in menu bar, never fully quits
 - **Detail panel**: Click any item → slides in from the right (40% width)
 - **Resource linking**: Paste a URL or search existing resources to attach them to any item; link icon shows on cards
+- **Log Win on complete**: Completing any item (from feed, clusters, or detail) prompts you to record your achievement
 - **Drag & drop**: Drag items onto each other to cluster them
+- **Bro Mode**: Toggle at the bottom of the sidebar switches to Apple's native dark mode aesthetic — monochrome, no category colors, same rounded card shapes. Preference persists across restarts.
 - **Inter font**: Clean typography throughout
 
 ---
@@ -100,6 +101,7 @@ cd ~/my-mind
 git pull
 swift build -c release
 cp .build/arm64-apple-macosx/release/MyMind /Applications/MyMind.app/Contents/MacOS/MyMind
+cp -R .build/arm64-apple-macosx/release/MyMind_MyMind.bundle /Applications/MyMind.app/Contents/MacOS/
 ```
 
 Then relaunch the app. Your data in `~/.my-mind/mind.db` is unaffected by updates.
@@ -135,6 +137,7 @@ cd ~/my-mind && git add -A && git commit -m "Update app" && git push
 cd ~/my-mind
 swift build -c release
 cp .build/arm64-apple-macosx/release/MyMind /Applications/MyMind.app/Contents/MacOS/MyMind
+cp -R .build/arm64-apple-macosx/release/MyMind_MyMind.bundle /Applications/MyMind.app/Contents/MacOS/
 ```
 
 ---
@@ -145,7 +148,7 @@ cp .build/arm64-apple-macosx/release/MyMind /Applications/MyMind.app/Contents/Ma
 my-mind/
 ├── Package.swift              # Dependencies (GRDB)
 ├── Sources/MyMind/
-│   ├── MyMindApp.swift        # App entry point, menu bar, window
+│   ├── MyMindApp.swift        # App entry point, window management
 │   ├── HotkeyManager.swift   # Ctrl+Option+M global hotkey
 │   ├── QuickCapturePanel.swift # Floating capture overlay
 │   ├── FontLoader.swift       # Inter font registration

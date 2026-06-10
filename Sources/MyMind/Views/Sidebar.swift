@@ -28,16 +28,20 @@ struct Sidebar: View {
 
             Spacer()
 
-            Button {
-                appState.broMode.toggle()
-            } label: {
-                Text(appState.broMode ? "girls just wanna have fun" : "bro mode")
-                    .font(.inter(8, weight: .medium))
-                    .foregroundStyle(appState.broMode ? Theme.pink : Theme.sidebarMuted)
+            VStack(spacing: 6) {
+                Text(appState.broMode ? "girls just\nwanna\nhave fun" : "bro\nmode")
+                    .font(.inter(7, weight: .bold))
                     .multilineTextAlignment(.center)
-                    .frame(width: 56)
+                    .foregroundStyle(Theme.sidebarMuted)
+                    .lineLimit(3)
+
+                Toggle("", isOn: $appState.broMode)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .controlSize(.mini)
+                    .tint(.gray)
             }
-            .buttonStyle(.plain)
+            .frame(width: 56)
             .padding(.bottom, 16)
         }
         .frame(width: 64)

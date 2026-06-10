@@ -104,6 +104,8 @@ struct OverviewView: View {
                         try? Queries.completeItem(id: item.id)
                         reload()
                         appState.refreshCounts()
+                        appState.completedItem = item
+                        appState.showLogWinSheet = true
                     } onDrop: { draggedId in
                         appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
                         reload()
@@ -139,6 +141,10 @@ struct OverviewView: View {
                         try? Queries.completeItem(id: itemId)
                         reload()
                         appState.refreshCounts()
+                        if let completed = try? Queries.getItem(id: itemId) {
+                            appState.completedItem = completed
+                            appState.showLogWinSheet = true
+                        }
                     }, onItemTap: { itemId in
                         appState.navigate(to: .itemDetail(itemId))
                     }, expandAllCounter: expandAllCounter, collapseAllCounter: collapseAllCounter)

@@ -25,7 +25,8 @@ struct ContentView: View {
         }
         .animation(.easeInOut(duration: 0.25), value: appState.detailPanelItemId)
         .frame(minWidth: 800, minHeight: 560)
-        .preferredColorScheme(.light)
+        .preferredColorScheme(appState.broMode ? .dark : .light)
+        .id(appState.broMode)
         .sheet(isPresented: $appState.showEditSheet) {
             if let item = appState.editingItem {
                 EditSheet(appState: appState, item: item)

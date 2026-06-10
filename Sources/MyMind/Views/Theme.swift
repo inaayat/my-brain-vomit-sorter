@@ -3,54 +3,55 @@ import SwiftUI
 enum Theme {
     static var isBro: Bool { UserDefaults.standard.bool(forKey: "broMode") }
 
-    static func radius(_ normal: CGFloat) -> CGFloat { isBro ? 0 : normal }
+    static func radius(_ normal: CGFloat) -> CGFloat { normal }
 
-    static var cardBorder: Color { isBro ? Color(hex: "#2E2E2E") : Color.clear }
+    static var cardBorder: Color { isBro ? Color(nsColor: .separatorColor) : Color.clear }
 
-    // Core Neutrals
-    static var canvas: Color { isBro ? Color(hex: "#121212") : Color(hex: "#F5EFE6") }
-    static var cardBg: Color { isBro ? Color(hex: "#1A1A1A") : Color(hex: "#FFFFFF") }
-    static var cardAlt: Color { isBro ? Color(hex: "#1E1E1E") : Color(hex: "#F9F9F7") }
-    static var divider: Color { isBro ? Color(hex: "#2E2E2E") : Color(hex: "#E6E0D6") }
-    static var softGray: Color { isBro ? Color(hex: "#2A2A2A") : Color(hex: "#ECEBE7") }
+    // Core Neutrals (bro mode uses Apple's dark mode elevation hierarchy)
+    static var canvas: Color { isBro ? Color(nsColor: .windowBackgroundColor) : Color(hex: "#F5EFE6") }
+    static var cardBg: Color { isBro ? Color(nsColor: .controlBackgroundColor) : Color(hex: "#FFFFFF") }
+    static var cardAlt: Color { isBro ? Color(hex: "#3A3A3C") : Color(hex: "#F9F9F7") }
+    static var divider: Color { isBro ? Color(nsColor: .separatorColor) : Color(hex: "#E6E0D6") }
+    static var softGray: Color { isBro ? Color(hex: "#3A3A3C") : Color(hex: "#ECEBE7") }
 
-    // Text
-    static var textPrimary: Color { isBro ? Color(hex: "#E0E0E0") : Color(hex: "#0F0F10") }
-    static var textSecondary: Color { isBro ? Color(hex: "#C0C0C0") : Color(hex: "#2A2A2A") }
-    static var textMuted: Color { isBro ? Color(hex: "#A0A0A0") : Color(hex: "#7A7A7A") }
+    // Text (bro mode uses Apple's label hierarchy)
+    static var textPrimary: Color { isBro ? Color(nsColor: .labelColor) : Color(hex: "#0F0F10") }
+    static var textSecondary: Color { isBro ? Color(nsColor: .secondaryLabelColor) : Color(hex: "#2A2A2A") }
+    static var textMuted: Color { isBro ? Color(nsColor: .tertiaryLabelColor) : Color(hex: "#7A7A7A") }
 
-    // Sidebar / Nav (unchanged in bro mode)
+    // Sidebar / Nav (unchanged)
     static var sidebarBg: Color { Color(hex: "#0F0F10") }
     static var sidebarText: Color { Color(hex: "#FFFFFF") }
     static var sidebarMuted: Color { Color(hex: "#9A9A9A") }
     static var sidebarActive: Color { Color(hex: "#FFFFFF").opacity(0.08) }
 
-    // Category: Actions (Green)
-    static var green: Color { Color(hex: "#9CAF6C") }
-    static var greenDark: Color { Color(hex: "#7E944F") }
-    static var greenTint: Color { isBro ? Color(hex: "#1E2420") : Color(hex: "#C9D7A3") }
+    // Category colors (grey in bro mode — icon shape is the only differentiator)
+    static var green: Color { isBro ? Color(nsColor: .systemGray) : Color(hex: "#9CAF6C") }
+    static var greenDark: Color { isBro ? Color(nsColor: .secondaryLabelColor) : Color(hex: "#7E944F") }
+    static var greenTint: Color { isBro ? Color(hex: "#2C2C2E") : Color(hex: "#C9D7A3") }
 
-    // Category: Brainstorms (Pink)
-    static var pink: Color { Color(hex: "#E78AB6") }
-    static var pinkDark: Color { Color(hex: "#C85A8E") }
-    static var pinkTint: Color { isBro ? Color(hex: "#241E22") : Color(hex: "#F4B6D3") }
+    static var pink: Color { isBro ? Color(nsColor: .systemGray) : Color(hex: "#E78AB6") }
+    static var pinkDark: Color { isBro ? Color(nsColor: .secondaryLabelColor) : Color(hex: "#C85A8E") }
+    static var pinkTint: Color { isBro ? Color(hex: "#2C2C2E") : Color(hex: "#F4B6D3") }
 
-    // Category: Revisit (Yellow)
-    static var yellow: Color { Color(hex: "#F2D36B") }
-    static var yellowDark: Color { Color(hex: "#C7A73E") }
-    static var yellowTint: Color { isBro ? Color(hex: "#24221E") : Color(hex: "#FAE8A6") }
+    static var yellow: Color { isBro ? Color(nsColor: .systemGray) : Color(hex: "#F2D36B") }
+    static var yellowDark: Color { isBro ? Color(nsColor: .secondaryLabelColor) : Color(hex: "#C7A73E") }
+    static var yellowTint: Color { isBro ? Color(hex: "#2C2C2E") : Color(hex: "#FAE8A6") }
 
-    // Category: Resources (Blue)
-    static var blue: Color { Color(hex: "#9FB7D9") }
-    static var blueDark: Color { Color(hex: "#6E8FBC") }
-    static var blueTint: Color { isBro ? Color(hex: "#1E2124") : Color(hex: "#C9D8EF") }
+    static var blue: Color { isBro ? Color(nsColor: .systemGray) : Color(hex: "#9FB7D9") }
+    static var blueDark: Color { isBro ? Color(nsColor: .secondaryLabelColor) : Color(hex: "#6E8FBC") }
+    static var blueTint: Color { isBro ? Color(hex: "#2C2C2E") : Color(hex: "#C9D8EF") }
 
     // Accents
-    static var purple: Color { Color(hex: "#A75A8A") }
-    static var warmBrown: Color { Color(hex: "#8B6F3D") }
+    static var purple: Color { isBro ? Color(nsColor: .secondaryLabelColor) : Color(hex: "#A75A8A") }
+    static var warmBrown: Color { isBro ? Color(nsColor: .tertiaryLabelColor) : Color(hex: "#8B6F3D") }
 
     // Progress / Visualization
-    static var emptyState: Color { isBro ? Color(hex: "#2A2A2A") : Color(hex: "#E6E0D6") }
+    static var emptyState: Color { isBro ? Color(hex: "#3A3A3C") : Color(hex: "#E6E0D6") }
+
+    // Specific element backgrounds (exact original colors preserved in normal mode)
+    static var clusterBg: Color { isBro ? Color(hex: "#2C2C2E") : Color(hex: "#FBF5E3") }
+    static var resourceRowBg: Color { isBro ? Color(hex: "#2C2C2E") : Color(hex: "#EEF3FB") }
 
     // Convenience
     static var accent: Color { purple }

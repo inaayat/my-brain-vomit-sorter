@@ -251,7 +251,7 @@ struct ItemDetailView: View {
                         .buttonStyle(.plain)
                     }
                     .padding(8)
-                    .background(Theme.blueTint, in: RoundedRectangle(cornerRadius: Theme.radius(6)))
+                    .background(Theme.resourceRowBg, in: RoundedRectangle(cornerRadius: Theme.radius(6)))
                 }
             }
 

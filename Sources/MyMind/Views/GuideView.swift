@@ -71,6 +71,15 @@ struct GuideView: View {
                     guideBullet(icon: "checkmark.circle", text: "Completed — all finished items")
                     guideBullet(icon: "trophy.fill", text: "Wins — your achievement log")
                     guideBullet(icon: "brain.head.profile", text: "This guide (you're here)")
+                    guideBullet(icon: "switch.2", text: "Bro Mode toggle at the bottom — switches to Apple dark mode aesthetic")
+                }
+
+                guideSection(title: "Bro Mode", color: Theme.textMuted) {
+                    guideText("Toggle at the bottom of the sidebar switches between the default warm aesthetic and a monochrome Apple dark mode look.")
+                    guideBullet(icon: "moon.fill", text: "Uses Apple's native dark mode system colors")
+                    guideBullet(icon: "circle.fill", text: "All category colors become uniform grey — only icon shape distinguishes types")
+                    guideBullet(icon: "switch.2", text: "Toggle text shows 'bro mode' to activate, 'girls just wanna have fun' to switch back")
+                    guideText("Your preference persists across app restarts.")
                 }
 
                 guideSection(title: "AI Setup", color: Theme.textMuted) {

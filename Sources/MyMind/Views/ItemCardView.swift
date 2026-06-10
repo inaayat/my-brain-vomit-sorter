@@ -47,7 +47,7 @@ struct ItemCardView: View {
             } label: {
                 Circle()
                     .strokeBorder(item.done ? Theme.greenDark : Theme.textMuted, lineWidth: 2)
-                    .background(item.done ? Circle().fill(Theme.green) : nil)
+                    .background(Circle().fill(item.done ? Theme.green : Color.clear))
                     .frame(width: 22, height: 22)
                     .overlay {
                         if item.done {
@@ -56,6 +56,8 @@ struct ItemCardView: View {
                                 .foregroundStyle(.white)
                         }
                     }
+                    .padding(8)
+                    .contentShape(Circle().size(width: 38, height: 38))
             }
             .buttonStyle(.plain)
             .contentShape(Rectangle())
@@ -115,14 +117,7 @@ struct ItemCardView: View {
     }
 
     private var cardBackground: Color {
-        if Theme.isBro {
-            switch item.category {
-            case .action: return Color(hex: "#1E2420")
-            case .brainstorm: return Color(hex: "#241E22")
-            case .revisit: return Color(hex: "#24221E")
-            case .resource: return Color(hex: "#1E2124")
-            }
-        }
+        if Theme.isBro { return Color(nsColor: .controlBackgroundColor) }
         switch item.category {
         case .action: return Color(hex: "#EAF2D9")
         case .brainstorm: return Color(hex: "#FBEAF1")

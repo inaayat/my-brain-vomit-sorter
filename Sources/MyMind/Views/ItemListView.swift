@@ -39,7 +39,15 @@ struct ItemListView: View {
                             ClusterCardView(cluster: cluster) {} onDropItem: { draggedId in
                                 appState.addToClusterFromDrop(draggedId: draggedId, clusterId: cluster.id)
                                 reload()
-                            } onChanged: { reload() } onItemComplete: { itemId in try? Queries.completeItem(id: itemId); reload(); appState.refreshCounts() } onItemTap: { itemId in
+                            } onChanged: { reload() } onItemComplete: { itemId in
+                                try? Queries.completeItem(id: itemId)
+                                reload()
+                                appState.refreshCounts()
+                                if let completed = try? Queries.getItem(id: itemId) {
+                                    appState.completedItem = completed
+                                    appState.showLogWinSheet = true
+                                }
+                            } onItemTap: { itemId in
                                 appState.navigate(to: .itemDetail(itemId))
                             }
                         }
@@ -60,6 +68,10 @@ struct ItemListView: View {
                                 vm.toggleComplete(item: item)
                                 reload()
                                 appState.refreshCounts()
+                                if !item.done {
+                                    appState.completedItem = item
+                                    appState.showLogWinSheet = true
+                                }
                             } onDrop: { draggedId in
                                 appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
                                 reload()

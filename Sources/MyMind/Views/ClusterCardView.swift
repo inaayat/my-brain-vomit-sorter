@@ -53,7 +53,7 @@ struct ClusterCardView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 6)
         .frame(maxWidth: .infinity)
-        .background(Theme.yellowTint, in: RoundedRectangle(cornerRadius: Theme.radius(8)))
+        .background(Theme.clusterBg, in: RoundedRectangle(cornerRadius: Theme.radius(8)))
         .contentShape(Rectangle())
         .onTapGesture(count: 2) {
             editTitle = cluster.title
@@ -87,7 +87,7 @@ struct ClusterCardView: View {
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
                         .frame(width: 110)
-                        .background(Theme.yellowTint, in: RoundedRectangle(cornerRadius: Theme.radius(10)))
+                        .background(Theme.clusterBg, in: RoundedRectangle(cornerRadius: Theme.radius(10)))
                         .contentShape(Rectangle())
                         .onTapGesture(count: 2) {
                             editTitle = cluster.title
@@ -178,18 +178,11 @@ struct ClusterCardView: View {
     }
 
     private func itemBackground(_ category: Category) -> Color {
-        if Theme.isBro {
-            switch category {
-            case .action: return Color(hex: "#1E2420")
-            case .brainstorm: return Color(hex: "#241E22")
-            case .revisit: return Color(hex: "#24221E")
-            case .resource: return Color(hex: "#1E2124")
-            }
-        }
+        if Theme.isBro { return Color(nsColor: .controlBackgroundColor) }
         switch category {
         case .action: return Color(hex: "#EAF2D9")
         case .brainstorm: return Color(hex: "#FBEAF1")
-        case .revisit: return Theme.yellowTint
+        case .revisit: return Color(hex: "#FBF5E3")
         case .resource: return Color(hex: "#EEF3FB")
         }
     }
