@@ -4,81 +4,29 @@ A native macOS SwiftUI personal knowledge management app. Capture thoughts, trac
 
 ---
 
-## Download & Install on a New Mac
+## Install
 
-### Prerequisites
+One command — clones, builds, and installs the app:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/inaayat/my-brain-vomit-sorter/main/install.sh | bash
+```
+
+### Requirements
 - macOS 14 (Sonoma) or later
-- Xcode Command Line Tools: `xcode-select --install`
-- Homebrew (optional, for Ollama): `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+- Xcode Command Line Tools (the script will prompt you to install if missing)
 
-### Step 1: Clone the repo
-```bash
-git clone https://github.com/inaayat/my-mind.git
-cd my-mind
-```
+The installer will:
+1. Clone the repo to `~/my-mind`
+2. Build a release binary
+3. Create the app bundle at `/Applications/MyMind.app`
+4. Optionally set up launch-at-login
+5. Optionally pull Ollama's llama3.2 model for free local AI
 
-### Step 2: Build
-```bash
-swift build -c release
-```
-This downloads dependencies (GRDB) and compiles the app. Takes ~30-60 seconds on first build.
-
-### Step 3: Install as a macOS app
-```bash
-# Create the app bundle
-mkdir -p /Applications/MyMind.app/Contents/MacOS
-mkdir -p /Applications/MyMind.app/Contents/Resources
-
-# Copy the built binary
-cp .build/arm64-apple-macosx/release/MyMind /Applications/MyMind.app/Contents/MacOS/MyMind
-
-# Copy the Info.plist (creates it if needed)
-cat > /Applications/MyMind.app/Contents/Info.plist << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key><string>MyMind</string>
-    <key>CFBundleIdentifier</key><string>com.igill.mymind</string>
-    <key>CFBundleName</key><string>MyMind</string>
-    <key>CFBundleDisplayName</key><string>MyMind</string>
-    <key>CFBundleVersion</key><string>1.0.0</string>
-    <key>CFBundleShortVersionString</key><string>1.0.0</string>
-    <key>CFBundlePackageType</key><string>APPL</string>
-    <key>LSMinimumSystemVersion</key><string>14.0</string>
-    <key>CFBundleIconFile</key><string>AppIcon</string>
-    <key>NSHighResolutionCapable</key><true/>
-</dict>
-</plist>
-EOF
-```
-
-### Step 4: Launch
-```bash
-open -a /Applications/MyMind.app
-```
-
-### Step 5: Grant Accessibility (for global hotkey)
+### After install: Grant Accessibility (for global hotkey)
 1. System Settings > Privacy & Security > Accessibility
 2. Click + and add `/Applications/MyMind.app`
 3. Restart the app
-
-### Step 6: (Optional) Launch at login
-```bash
-cat > ~/Library/LaunchAgents/com.igill.mymind.plist << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key><string>com.igill.mymind</string>
-    <key>ProgramArguments</key>
-    <array><string>open</string><string>-a</string><string>/Applications/MyMind.app</string></array>
-    <key>RunAtLoad</key><true/>
-</dict>
-</plist>
-EOF
-launchctl load ~/Library/LaunchAgents/com.igill.mymind.plist
-```
 
 ---
 
