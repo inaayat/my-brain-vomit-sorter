@@ -10,27 +10,8 @@ struct MyMindApp: App {
         }
         .defaultSize(width: 1000, height: 700)
 
-        MenuBarExtra("my-mind", systemImage: "brain.head.profile") {
-            Button("Show Window") {
-                showMainWindow()
-            }
-            .keyboardShortcut("m", modifiers: [.control, .option])
-            Divider()
-            Button("Quit") {
-                NSApplication.shared.terminate(nil)
-            }
-            .keyboardShortcut("q", modifiers: [.command])
-        }
     }
 
-    private func showMainWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-        if let window = NSApp.windows.first(where: { $0.title == "my-mind" || $0.identifier?.rawValue == "main" }) {
-            window.makeKeyAndOrderFront(nil)
-        } else {
-            NSApp.sendAction(#selector(NSApplication.newWindowForTab(_:)), to: nil, from: nil)
-        }
-    }
 }
 
 

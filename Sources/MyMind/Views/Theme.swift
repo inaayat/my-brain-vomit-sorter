@@ -1,57 +1,63 @@
 import SwiftUI
 
 enum Theme {
+    static var isBro: Bool { UserDefaults.standard.bool(forKey: "broMode") }
+
+    static func radius(_ normal: CGFloat) -> CGFloat { isBro ? 0 : normal }
+
+    static var cardBorder: Color { isBro ? Color(hex: "#2E2E2E") : Color.clear }
+
     // Core Neutrals
-    static let canvas = Color(hex: "#F5EFE6")
-    static let cardBg = Color(hex: "#FFFFFF")
-    static let cardAlt = Color(hex: "#F9F9F7")
-    static let divider = Color(hex: "#E6E0D6")
-    static let softGray = Color(hex: "#ECEBE7")
+    static var canvas: Color { isBro ? Color(hex: "#121212") : Color(hex: "#F5EFE6") }
+    static var cardBg: Color { isBro ? Color(hex: "#1A1A1A") : Color(hex: "#FFFFFF") }
+    static var cardAlt: Color { isBro ? Color(hex: "#1E1E1E") : Color(hex: "#F9F9F7") }
+    static var divider: Color { isBro ? Color(hex: "#2E2E2E") : Color(hex: "#E6E0D6") }
+    static var softGray: Color { isBro ? Color(hex: "#2A2A2A") : Color(hex: "#ECEBE7") }
 
     // Text
-    static let textPrimary = Color(hex: "#0F0F10")
-    static let textSecondary = Color(hex: "#2A2A2A")
-    static let textMuted = Color(hex: "#7A7A7A")
+    static var textPrimary: Color { isBro ? Color(hex: "#E0E0E0") : Color(hex: "#0F0F10") }
+    static var textSecondary: Color { isBro ? Color(hex: "#C0C0C0") : Color(hex: "#2A2A2A") }
+    static var textMuted: Color { isBro ? Color(hex: "#A0A0A0") : Color(hex: "#7A7A7A") }
 
-    // Sidebar / Nav
-    static let sidebarBg = Color(hex: "#0F0F10")
-    static let sidebarText = Color(hex: "#FFFFFF")
-    static let sidebarMuted = Color(hex: "#9A9A9A")
-    static let sidebarActive = Color(hex: "#FFFFFF").opacity(0.08)
+    // Sidebar / Nav (unchanged in bro mode)
+    static var sidebarBg: Color { Color(hex: "#0F0F10") }
+    static var sidebarText: Color { Color(hex: "#FFFFFF") }
+    static var sidebarMuted: Color { Color(hex: "#9A9A9A") }
+    static var sidebarActive: Color { Color(hex: "#FFFFFF").opacity(0.08) }
 
     // Category: Actions (Green)
-    static let green = Color(hex: "#9CAF6C")
-    static let greenDark = Color(hex: "#7E944F")
-    static let greenTint = Color(hex: "#C9D7A3")
+    static var green: Color { Color(hex: "#9CAF6C") }
+    static var greenDark: Color { Color(hex: "#7E944F") }
+    static var greenTint: Color { isBro ? Color(hex: "#1E2420") : Color(hex: "#C9D7A3") }
 
     // Category: Brainstorms (Pink)
-    static let pink = Color(hex: "#E78AB6")
-    static let pinkDark = Color(hex: "#C85A8E")
-    static let pinkTint = Color(hex: "#F4B6D3")
+    static var pink: Color { Color(hex: "#E78AB6") }
+    static var pinkDark: Color { Color(hex: "#C85A8E") }
+    static var pinkTint: Color { isBro ? Color(hex: "#241E22") : Color(hex: "#F4B6D3") }
 
     // Category: Revisit (Yellow)
-    static let yellow = Color(hex: "#F2D36B")
-    static let yellowDark = Color(hex: "#C7A73E")
-    static let yellowTint = Color(hex: "#FAE8A6")
+    static var yellow: Color { Color(hex: "#F2D36B") }
+    static var yellowDark: Color { Color(hex: "#C7A73E") }
+    static var yellowTint: Color { isBro ? Color(hex: "#24221E") : Color(hex: "#FAE8A6") }
 
     // Category: Resources (Blue)
-    static let blue = Color(hex: "#9FB7D9")
-    static let blueDark = Color(hex: "#6E8FBC")
-    static let blueTint = Color(hex: "#C9D8EF")
+    static var blue: Color { Color(hex: "#9FB7D9") }
+    static var blueDark: Color { Color(hex: "#6E8FBC") }
+    static var blueTint: Color { isBro ? Color(hex: "#1E2124") : Color(hex: "#C9D8EF") }
 
     // Accents
-    static let purple = Color(hex: "#A75A8A")
-    static let warmBrown = Color(hex: "#8B6F3D")
+    static var purple: Color { Color(hex: "#A75A8A") }
+    static var warmBrown: Color { Color(hex: "#8B6F3D") }
 
     // Progress / Visualization
-    static let emptyState = Color(hex: "#E6E0D6")
+    static var emptyState: Color { isBro ? Color(hex: "#2A2A2A") : Color(hex: "#E6E0D6") }
 
     // Convenience
-    static let accent = purple
-    static let border = divider
-    static let card = cardBg
-    static let surface = cardAlt
-    static let bg = canvas
+    static var accent: Color { purple }
+    static var border: Color { divider }
+    static var card: Color { cardBg }
+    static var surface: Color { cardAlt }
+    static var bg: Color { canvas }
 }
 
 extension Color {

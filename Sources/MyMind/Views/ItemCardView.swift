@@ -63,14 +63,14 @@ struct ItemCardView: View {
         .padding(.vertical, 12)
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground, in: RoundedRectangle(cornerRadius: 10))
-        .contentShape(RoundedRectangle(cornerRadius: 10))
+        .background(cardBackground, in: RoundedRectangle(cornerRadius: Theme.radius(10)))
+        .contentShape(RoundedRectangle(cornerRadius: Theme.radius(10)))
         .onTapGesture {
             onTap()
         }
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(isDropTarget ? Theme.purple : Color.clear, lineWidth: 2)
+            RoundedRectangle(cornerRadius: Theme.radius(10))
+                .strokeBorder(isDropTarget ? Theme.purple : Theme.cardBorder, lineWidth: isDropTarget ? 2 : 1)
         )
         .dropDestination(for: String.self) { droppedIds, _ in
             guard let draggedId = droppedIds.first, draggedId != item.id else { return false }
@@ -115,6 +115,14 @@ struct ItemCardView: View {
     }
 
     private var cardBackground: Color {
+        if Theme.isBro {
+            switch item.category {
+            case .action: return Color(hex: "#1E2420")
+            case .brainstorm: return Color(hex: "#241E22")
+            case .revisit: return Color(hex: "#24221E")
+            case .resource: return Color(hex: "#1E2124")
+            }
+        }
         switch item.category {
         case .action: return Color(hex: "#EAF2D9")
         case .brainstorm: return Color(hex: "#FBEAF1")
@@ -133,7 +141,7 @@ struct CategoryBadge: View {
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(color)
             .frame(width: 24, height: 24)
-            .background(tint.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
+            .background(tint.opacity(0.5), in: RoundedRectangle(cornerRadius: Theme.radius(6)))
     }
 
     private var icon: String {
@@ -173,6 +181,6 @@ struct TagBadge: View {
             .foregroundStyle(Theme.textMuted)
             .padding(.horizontal, 5)
             .padding(.vertical, 2)
-            .background(Theme.softGray, in: RoundedRectangle(cornerRadius: 4))
+            .background(Theme.softGray, in: RoundedRectangle(cornerRadius: Theme.radius(4)))
     }
 }

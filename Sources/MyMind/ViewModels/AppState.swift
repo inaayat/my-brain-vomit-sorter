@@ -14,6 +14,9 @@ enum NavigationDestination: Hashable {
 final class AppState {
     var selectedDestination: NavigationDestination = .overview
     var lastSection: NavigationDestination = .overview
+    var broMode: Bool = UserDefaults.standard.bool(forKey: "broMode") {
+        didSet { UserDefaults.standard.set(broMode, forKey: "broMode") }
+    }
 
     func navigate(to dest: NavigationDestination) {
         if case .itemDetail(let id) = dest {

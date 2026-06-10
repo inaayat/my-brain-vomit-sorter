@@ -83,9 +83,9 @@ struct OverviewView: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(tint.opacity(isActive ? 0.7 : 0.4), in: RoundedRectangle(cornerRadius: 12))
+            .background(tint.opacity(isActive ? 0.7 : 0.4), in: RoundedRectangle(cornerRadius: Theme.radius(12)))
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: Theme.radius(12))
                     .strokeBorder(isActive ? color : Color.clear, lineWidth: 2)
             )
         }
@@ -209,7 +209,7 @@ struct OverviewView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
                 .frame(width: 110)
-                .background(labelBg, in: RoundedRectangle(cornerRadius: 10))
+                .background(labelBg, in: RoundedRectangle(cornerRadius: Theme.radius(10)))
 
             Color.clear.frame(width: 12)
 

@@ -13,7 +13,7 @@ struct Sidebar: View {
                     .font(.system(size: 18, weight: .medium))
                     .foregroundStyle(Theme.pink)
                     .frame(width: 36, height: 36)
-                    .background(Theme.pinkTint.opacity(0.4), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .background(Theme.pinkTint.opacity(0.4), in: RoundedRectangle(cornerRadius: Theme.radius(10), style: .continuous))
             }
             .buttonStyle(.plain)
             .padding(.top, 20)
@@ -27,6 +27,18 @@ struct Sidebar: View {
             }
 
             Spacer()
+
+            Button {
+                appState.broMode.toggle()
+            } label: {
+                Text(appState.broMode ? "girls just wanna have fun" : "bro mode")
+                    .font(.inter(8, weight: .medium))
+                    .foregroundStyle(appState.broMode ? Theme.pink : Theme.sidebarMuted)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 56)
+            }
+            .buttonStyle(.plain)
+            .padding(.bottom, 16)
         }
         .frame(width: 64)
         .background(Theme.sidebarBg)

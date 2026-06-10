@@ -68,8 +68,8 @@ struct InlineCaptureView: View {
                 }
             }
             .padding(12)
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: 10))
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.border, lineWidth: 1))
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.radius(10)))
+            .overlay(RoundedRectangle(cornerRadius: Theme.radius(10)).strokeBorder(Theme.border, lineWidth: 1))
 
             if expanded && !text.trimmingCharacters(in: .whitespaces).isEmpty {
                 VStack(alignment: .leading, spacing: 8) {

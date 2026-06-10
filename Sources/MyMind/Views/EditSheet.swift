@@ -21,7 +21,7 @@ struct EditSheet: View {
                 .font(.inter(14))
                 .frame(minHeight: 80, maxHeight: 120)
                 .padding(4)
-                .background(Theme.softGray.opacity(0.3), in: RoundedRectangle(cornerRadius: 6))
+                .background(Theme.softGray.opacity(0.3), in: RoundedRectangle(cornerRadius: Theme.radius(6)))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("CATEGORY")

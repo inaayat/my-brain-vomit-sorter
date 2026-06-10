@@ -79,7 +79,7 @@ struct GuideView: View {
                         .font(.inter(11))
                         .foregroundStyle(Theme.textMuted)
                         .padding(8)
-                        .background(Theme.softGray, in: RoundedRectangle(cornerRadius: 6))
+                        .background(Theme.softGray, in: RoundedRectangle(cornerRadius: Theme.radius(6)))
                     guideText("Or use Ollama for free local AI: brew install ollama && ollama pull llama3.2")
                 }
             }

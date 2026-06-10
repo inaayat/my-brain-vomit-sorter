@@ -113,7 +113,7 @@ struct WinCard: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: "#FBF5E3"), in: RoundedRectangle(cornerRadius: 10))
+        .background(Theme.yellowTint, in: RoundedRectangle(cornerRadius: Theme.radius(10)))
         .contentShape(Rectangle())
         .onTapGesture { onTap() }
     }

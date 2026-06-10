@@ -45,7 +45,7 @@ struct ItemDetailView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .background(tintColor.opacity(0.3))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .clipShape(RoundedRectangle(cornerRadius: Theme.radius(14)))
             .onAppear { loadData() }
             .onChange(of: itemId) { _, _ in loadData() }
             .confirmationDialog("Analyze notes with AI?", isPresented: $showAnalyzePrompt) {
@@ -58,7 +58,7 @@ struct ItemDetailView: View {
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.softGray.opacity(0.3))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .clipShape(RoundedRectangle(cornerRadius: Theme.radius(14)))
                 .onAppear { loadData() }
         }
     }
@@ -251,7 +251,7 @@ struct ItemDetailView: View {
                         .buttonStyle(.plain)
                     }
                     .padding(8)
-                    .background(Color(hex: "#EEF3FB"), in: RoundedRectangle(cornerRadius: 6))
+                    .background(Theme.blueTint, in: RoundedRectangle(cornerRadius: Theme.radius(6)))
                 }
             }
 
@@ -261,8 +261,8 @@ struct ItemDetailView: View {
                 .font(.inter(12))
                 .textFieldStyle(.plain)
                 .padding(8)
-                .background(Theme.cardBg, in: RoundedRectangle(cornerRadius: 6))
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Theme.border, lineWidth: 1))
+                .background(Theme.cardBg, in: RoundedRectangle(cornerRadius: Theme.radius(6)))
+                .overlay(RoundedRectangle(cornerRadius: Theme.radius(6)).strokeBorder(Theme.border, lineWidth: 1))
                 .onChange(of: resourceInput) { _, newValue in
                     if !looksLikeURL(newValue) && newValue.count >= 2 {
                         resourceSearchResults = (try? Queries.searchResourceItems(query: newValue)) ?? []
@@ -276,8 +276,8 @@ struct ItemDetailView: View {
                     .font(.inter(12))
                     .textFieldStyle(.plain)
                     .padding(8)
-                    .background(Theme.cardBg, in: RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Theme.border, lineWidth: 1))
+                    .background(Theme.cardBg, in: RoundedRectangle(cornerRadius: Theme.radius(6)))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.radius(6)).strokeBorder(Theme.border, lineWidth: 1))
                     .onSubmit { addNewResource() }
 
                 HStack {
@@ -310,7 +310,7 @@ struct ItemDetailView: View {
                             .buttonStyle(.plain)
                         }
                         .padding(6)
-                        .background(Theme.softGray.opacity(0.3), in: RoundedRectangle(cornerRadius: 4))
+                        .background(Theme.softGray.opacity(0.3), in: RoundedRectangle(cornerRadius: Theme.radius(4)))
                     }
                 }
             }
@@ -358,8 +358,8 @@ struct ItemDetailView: View {
                         .scrollContentBackground(.hidden)
                         .frame(height: geo.size.height * 0.75)
                         .padding(6)
-                        .background(Theme.cardBg, in: RoundedRectangle(cornerRadius: 6))
-                        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Theme.border, lineWidth: 1))
+                        .background(Theme.cardBg, in: RoundedRectangle(cornerRadius: Theme.radius(6)))
+                        .overlay(RoundedRectangle(cornerRadius: Theme.radius(6)).strokeBorder(Theme.border, lineWidth: 1))
                         .onChange(of: notesText) { oldValue, newValue in
                         notesDirty = true
                         if newValue.count == oldValue.count + 1,
@@ -459,8 +459,8 @@ struct ItemDetailView: View {
                 }
             }
             .padding(12)
-            .background(Theme.cardBg.opacity(0.8), in: RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.purple.opacity(0.3), lineWidth: 1))
+            .background(Theme.cardBg.opacity(0.8), in: RoundedRectangle(cornerRadius: Theme.radius(8)))
+            .overlay(RoundedRectangle(cornerRadius: Theme.radius(8)).strokeBorder(Theme.purple.opacity(0.3), lineWidth: 1))
             .padding(.horizontal, 20)
         }
     }
@@ -487,7 +487,7 @@ struct ItemDetailView: View {
             .buttonStyle(.plain)
         }
         .padding(6)
-        .background(Theme.softGray.opacity(0.3), in: RoundedRectangle(cornerRadius: 6))
+        .background(Theme.softGray.opacity(0.3), in: RoundedRectangle(cornerRadius: Theme.radius(6)))
     }
 
     private func saveNotes() {

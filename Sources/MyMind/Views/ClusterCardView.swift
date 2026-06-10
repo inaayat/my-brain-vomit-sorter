@@ -27,8 +27,8 @@ struct ClusterCardView: View {
         .onChange(of: expandAllCounter) { withAnimation(.easeInOut(duration: 0.25)) { isExpanded = true } }
         .onChange(of: collapseAllCounter) { withAnimation(.easeInOut(duration: 0.25)) { isExpanded = false } }
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(isDropTarget ? Theme.purple : Color.clear, lineWidth: isDropTarget ? 2 : 0)
+            RoundedRectangle(cornerRadius: Theme.radius(12))
+                .strokeBorder(isDropTarget ? Theme.purple : Theme.cardBorder, lineWidth: isDropTarget ? 2 : 1)
         )
         .dropDestination(for: String.self) { droppedIds, _ in
             guard let draggedId = droppedIds.first else { return false }
@@ -53,7 +53,7 @@ struct ClusterCardView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 6)
         .frame(maxWidth: .infinity)
-        .background(Color(hex: "#FBF5E3"), in: RoundedRectangle(cornerRadius: 8))
+        .background(Theme.yellowTint, in: RoundedRectangle(cornerRadius: Theme.radius(8)))
         .contentShape(Rectangle())
         .onTapGesture(count: 2) {
             editTitle = cluster.title
@@ -87,7 +87,7 @@ struct ClusterCardView: View {
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
                         .frame(width: 110)
-                        .background(Color(hex: "#FBF5E3"), in: RoundedRectangle(cornerRadius: 10))
+                        .background(Theme.yellowTint, in: RoundedRectangle(cornerRadius: Theme.radius(10)))
                         .contentShape(Rectangle())
                         .onTapGesture(count: 2) {
                             editTitle = cluster.title
@@ -170,18 +170,26 @@ struct ClusterCardView: View {
         }
         .padding(.vertical, 6)
         .padding(.horizontal, 10)
-        .background(itemBackground(item.category), in: RoundedRectangle(cornerRadius: 8))
-        .contentShape(RoundedRectangle(cornerRadius: 8))
+        .background(itemBackground(item.category), in: RoundedRectangle(cornerRadius: Theme.radius(8)))
+        .contentShape(RoundedRectangle(cornerRadius: Theme.radius(8)))
         .onTapGesture {
             onItemTap?(item.id)
         }
     }
 
     private func itemBackground(_ category: Category) -> Color {
+        if Theme.isBro {
+            switch category {
+            case .action: return Color(hex: "#1E2420")
+            case .brainstorm: return Color(hex: "#241E22")
+            case .revisit: return Color(hex: "#24221E")
+            case .resource: return Color(hex: "#1E2124")
+            }
+        }
         switch category {
         case .action: return Color(hex: "#EAF2D9")
         case .brainstorm: return Color(hex: "#FBEAF1")
-        case .revisit: return Color(hex: "#FBF5E3")
+        case .revisit: return Theme.yellowTint
         case .resource: return Color(hex: "#EEF3FB")
         }
     }
