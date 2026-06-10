@@ -4,6 +4,7 @@ struct ClustersView: View {
     @Bindable var appState: AppState
     @State private var clusters: [Cluster] = []
     @State private var unclusteredItems: [Item] = []
+    @State private var resourceCounts: [String: Int] = [:]
     @State private var mergeMode = false
     @State private var mergeSelection: Set<String> = []
 
@@ -133,7 +134,7 @@ struct ClustersView: View {
                 .foregroundStyle(Theme.textMuted)
 
             ForEach(unclusteredItems) { item in
-                ItemCardView(item: item) {
+                ItemCardView(item: item, resourceCount: resourceCounts[item.id] ?? 0) {
                     appState.navigate(to: .itemDetail(item.id))
                 } onComplete: {
                     try? Queries.completeItem(id: item.id)
@@ -150,6 +151,7 @@ struct ClustersView: View {
     private func reload() {
         clusters = (try? Queries.getAllClustersWithItems()) ?? []
         unclusteredItems = (try? Queries.getUnclusteredItems()) ?? []
+        resourceCounts = (try? Queries.getResourceCounts(itemIds: unclusteredItems.map(\.id))) ?? [:]
     }
 
     private func performMerge() {

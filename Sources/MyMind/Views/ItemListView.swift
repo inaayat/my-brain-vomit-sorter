@@ -8,6 +8,7 @@ struct ItemListView: View {
 
     @State private var vm = ItemListViewModel()
     @State private var searchText = ""
+    @State private var resourceCounts: [String: Int] = [:]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -53,7 +54,7 @@ struct ItemListView: View {
                             .padding(.top, 40)
                     } else {
                         ForEach(displayItems) { item in
-                            ItemCardView(item: item) {
+                            ItemCardView(item: item, resourceCount: resourceCounts[item.id] ?? 0) {
                                 appState.navigate(to: .itemDetail(item.id))
                             } onComplete: {
                                 vm.toggleComplete(item: item)
@@ -81,5 +82,6 @@ struct ItemListView: View {
         } else {
             vm.load(category: category)
         }
+        resourceCounts = (try? Queries.getResourceCounts(itemIds: vm.items.map(\.id))) ?? [:]
     }
 }

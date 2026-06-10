@@ -3,6 +3,7 @@ import SwiftUI
 struct ItemCardView: View {
     let item: Item
     var compact: Bool = false
+    var resourceCount: Int = 0
     var onTap: () -> Void
     var onComplete: (() -> Void)?
     var onDrop: ((String) -> Void)?
@@ -12,37 +13,20 @@ struct ItemCardView: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
-            // Category badge on the left
-            CategoryBadge(category: item.category)
-
-            // Text in the middle — tap to open detail
-            Button(action: onTap) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(displayText)
-                        .font(.inter(13))
-                        .foregroundStyle(item.done ? Theme.textMuted : Theme.textPrimary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .strikethrough(item.done)
-                        .multilineTextAlignment(.leading)
-                    if item.category == .resource, let url = item.url, !url.isEmpty {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.up.right")
-                                .font(.system(size: 8))
-                            Text(URL(string: url)?.host?.replacingOccurrences(of: "www.", with: "") ?? url)
-                                .lineLimit(1)
-                        }
-                        .font(.inter(10))
-                        .foregroundStyle(Theme.blueDark)
-                    }
-                }
-            }
-            .buttonStyle(.plain)
+            // Draggable content: badge + text — tap opens detail panel
+            dragContent
+                .draggable(item.id)
 
             Spacer()
 
             PriorityPicker(item: item, onChange: { onChange?() })
 
-            // Decluster — remove from cluster
+            if resourceCount > 0 {
+                Image(systemName: "link")
+                    .font(.inter(10))
+                    .foregroundStyle(Theme.blueDark)
+            }
+
             if item.clusterId != nil {
                 Button {
                     try? Queries.removeFromCluster(itemId: item.id)
@@ -58,33 +42,36 @@ struct ItemCardView: View {
                 .buttonStyle(.plain)
             }
 
-            // Checkbox on the right
             Button {
                 onComplete?()
             } label: {
                 Circle()
                     .strokeBorder(item.done ? Theme.greenDark : Theme.textMuted, lineWidth: 2)
                     .background(item.done ? Circle().fill(Theme.green) : nil)
-                    .frame(width: 18, height: 18)
+                    .frame(width: 22, height: 22)
                     .overlay {
                         if item.done {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.system(size: 10, weight: .bold))
                                 .foregroundStyle(.white)
                         }
                     }
             }
             .buttonStyle(.plain)
+            .contentShape(Rectangle())
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(cardBackground, in: RoundedRectangle(cornerRadius: 10))
+        .contentShape(RoundedRectangle(cornerRadius: 10))
+        .onTapGesture {
+            onTap()
+        }
         .overlay(
             RoundedRectangle(cornerRadius: 10)
                 .strokeBorder(isDropTarget ? Theme.purple : Color.clear, lineWidth: 2)
         )
-        .draggable(item.id)
         .dropDestination(for: String.self) { droppedIds, _ in
             guard let draggedId = droppedIds.first, draggedId != item.id else { return false }
             onDrop?(draggedId)
@@ -92,6 +79,32 @@ struct ItemCardView: View {
         } isTargeted: { targeted in
             isDropTarget = targeted
         }
+    }
+
+    private var dragContent: some View {
+        HStack(alignment: .center, spacing: 10) {
+            CategoryBadge(category: item.category)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(displayText)
+                    .font(.inter(13))
+                    .foregroundStyle(item.done ? Theme.textMuted : Theme.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .strikethrough(item.done)
+                    .multilineTextAlignment(.leading)
+                if item.category == .resource, let url = item.url, !url.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 8))
+                        Text(URL(string: url)?.host?.replacingOccurrences(of: "www.", with: "") ?? url)
+                            .lineLimit(1)
+                    }
+                    .font(.inter(10))
+                    .foregroundStyle(Theme.blueDark)
+                }
+            }
+        }
+        .contentShape(Rectangle())
     }
 
     private var displayText: String {

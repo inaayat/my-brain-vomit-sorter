@@ -43,6 +43,7 @@ struct Item: Identifiable, Codable, Equatable {
     var tags: String?
     var url: String?
     var urlTitle: String?
+    var notes: String?
 
     var parsedTags: [String] {
         guard let tags else { return [] }
@@ -76,7 +77,7 @@ extension Item: FetchableRecord, PersistableRecord, TableRecord {
     static let databaseTableName = "items"
 
     enum Columns: String, ColumnExpression {
-        case id, text, category, createdAt, done, doneAt, priority, dueDate, clusterId, tags, url, urlTitle
+        case id, text, category, createdAt, done, doneAt, priority, dueDate, clusterId, tags, url, urlTitle, notes
     }
 }
 
@@ -94,7 +95,8 @@ extension Item {
             clusterId: nil,
             tags: nil,
             url: url,
-            urlTitle: urlTitle
+            urlTitle: urlTitle,
+            notes: nil
         )
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct InlineCaptureView: View {
     @Bindable var appState: AppState
@@ -30,13 +31,18 @@ struct InlineCaptureView: View {
                     .font(.inter(14))
                     .foregroundStyle(Theme.textPrimary)
                     .scrollContentBackground(.hidden)
-                    .frame(minHeight: 20, maxHeight: 120)
+                    .frame(minHeight: 20, maxHeight: 80)
                     .fixedSize(horizontal: false, vertical: true)
                     .onChange(of: text) { _, newValue in
                         if !newValue.isEmpty && !expanded {
                             expanded = true
                             allClusters = (try? Queries.getAllClustersWithItems()) ?? []
                             allResources = (try? Queries.getItems(category: .resource, done: false, limit: 50)) ?? []
+                        }
+                        // Enter to submit (unless Shift held — allow new lines via Shift+Enter)
+                        if newValue.hasSuffix("\n") && !NSEvent.modifierFlags.contains(.shift) {
+                            text = String(newValue.dropLast())
+                            save()
                         }
                     }
                     .overlay(alignment: .topLeading) {

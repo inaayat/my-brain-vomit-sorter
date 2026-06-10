@@ -245,6 +245,58 @@ struct Queries {
         }
     }
 
+    static func getResourceCount(itemId: String) throws -> Int {
+        try db.read { db in
+            try Int.fetchOne(db, sql: """
+                SELECT COUNT(*) FROM links l
+                JOIN items i ON (l.toId = i.id AND l.fromId = ?) OR (l.fromId = i.id AND l.toId = ?)
+                WHERE i.category = 'resource' OR (i.url IS NOT NULL AND i.url != '')
+                """, arguments: [itemId, itemId]) ?? 0
+        }
+    }
+
+    static func getResourceCounts(itemIds: [String]) throws -> [String: Int] {
+        guard !itemIds.isEmpty else { return [:] }
+        return try db.read { db in
+            let placeholders = itemIds.map { _ in "?" }.joined(separator: ",")
+            let sql = """
+                SELECT source_id, COUNT(*) as cnt FROM (
+                    SELECT l.fromId as source_id, i.id as resource_id FROM links l
+                    JOIN items i ON l.toId = i.id
+                    WHERE l.fromId IN (\(placeholders))
+                    AND (i.category = 'resource' OR (i.url IS NOT NULL AND i.url != ''))
+                    UNION ALL
+                    SELECT l.toId as source_id, i.id as resource_id FROM links l
+                    JOIN items i ON l.fromId = i.id
+                    WHERE l.toId IN (\(placeholders))
+                    AND (i.category = 'resource' OR (i.url IS NOT NULL AND i.url != ''))
+                ) GROUP BY source_id
+                """
+            let args = StatementArguments(itemIds + itemIds)
+            var result: [String: Int] = [:]
+            let rows = try Row.fetchAll(db, sql: sql, arguments: args)
+            for row in rows {
+                result[row["source_id"]] = row["cnt"]
+            }
+            return result
+        }
+    }
+
+    static func searchResourceItems(query: String) throws -> [Item] {
+        try db.read { db in
+            try Item.fetchAll(db, sql: """
+                SELECT * FROM items
+                WHERE (category = 'resource' OR (url IS NOT NULL AND url != ''))
+                AND (text LIKE ? OR url LIKE ? OR urlTitle LIKE ?)
+                ORDER BY createdAt DESC LIMIT 10
+                """, arguments: ["%\(query)%", "%\(query)%", "%\(query)%"])
+        }
+    }
+
+    static func getAllLinks() throws -> [Link] {
+        try db.read { db in try Link.fetchAll(db) }
+    }
+
     // MARK: - Wins
 
     static func addWin(_ win: Win) throws {

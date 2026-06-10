@@ -84,6 +84,12 @@ final class DatabaseManager: Sendable {
             }
         }
 
+        migrator.registerMigration("v4-notes") { db in
+            try db.alter(table: "items") { t in
+                t.add(column: "notes", .text)
+            }
+        }
+
         return migrator
     }
 }

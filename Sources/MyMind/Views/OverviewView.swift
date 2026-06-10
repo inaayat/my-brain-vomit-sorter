@@ -6,6 +6,7 @@ struct OverviewView: View {
     @State private var allClusters: [Cluster] = []
     @State private var activeFilter: Category? = .action
     @State private var counts: [Category: Int] = [:]
+    @State private var resourceCounts: [String: Int] = [:]
     @State private var expandAllCounter = 0
     @State private var collapseAllCounter = 0
 
@@ -97,7 +98,7 @@ struct OverviewView: View {
                 // "All Open" — flat list, no clusters, just sorted items
                 let items = allOpenItems()
                 ForEach(items) { item in
-                    ItemCardView(item: item) {
+                    ItemCardView(item: item, resourceCount: resourceCounts[item.id] ?? 0) {
                         appState.navigate(to: .itemDetail(item.id))
                     } onComplete: {
                         try? Queries.completeItem(id: item.id)
@@ -212,7 +213,7 @@ struct OverviewView: View {
 
             Color.clear.frame(width: 12)
 
-            ItemCardView(item: item) {
+            ItemCardView(item: item, resourceCount: resourceCounts[item.id] ?? 0) {
                 appState.navigate(to: .itemDetail(item.id))
             } onComplete: {
                 try? Queries.completeItem(id: item.id)
@@ -289,6 +290,7 @@ struct OverviewView: View {
         for item in allItems where !item.done {
             counts[item.category, default: 0] += 1
         }
+        resourceCounts = (try? Queries.getResourceCounts(itemIds: allItems.map(\.id))) ?? [:]
         appState.refreshCounts()
     }
 

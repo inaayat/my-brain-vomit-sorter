@@ -123,10 +123,10 @@ struct AnthropicClient: Sendable {
     }
 
     func send(system: String, userMessage: String, maxTokens: Int = 1024) async throws -> String {
+        if await ollamaAvailable() {
+            return try await sendViaOllama(system: system, userMessage: userMessage)
+        }
         guard let key = apiKey() else {
-            if await ollamaAvailable() {
-                return try await sendViaOllama(system: system, userMessage: userMessage)
-            }
             throw AIError.noAPIKey
         }
 
@@ -160,10 +160,10 @@ struct AnthropicClient: Sendable {
     }
 
     func sendWithCache(system: String, cachedContent: String, userMessage: String, maxTokens: Int = 1024) async throws -> String {
+        if await ollamaAvailable() {
+            return try await sendViaOllama(system: system, userMessage: cachedContent + "\n\n" + userMessage)
+        }
         guard let key = apiKey() else {
-            if await ollamaAvailable() {
-                return try await sendViaOllama(system: system, userMessage: cachedContent + "\n\n" + userMessage)
-            }
             throw AIError.noAPIKey
         }
 

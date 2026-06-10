@@ -6,6 +6,11 @@ struct CategorizeResult {
     let cleanedText: String
 }
 
+struct NoteSuggestionsResult {
+    let actions: [String]
+    let brainstorms: [String]
+}
+
 struct ClusterResult {
     var duplicateOf: String?
     var clusterId: String?
@@ -144,6 +149,23 @@ struct AIService {
             """
         let userMessage = "Topic: \(title)\n\nRaw inputs:\n" + texts.map { "- \($0)" }.joined(separator: "\n")
         return try await client.send(system: system, userMessage: userMessage, maxTokens: 150)
+    }
+
+    static func analyzeNotes(itemText: String, notes: String) async throws -> NoteSuggestionsResult {
+        let system = """
+            You analyze notes attached to a task and extract:
+            1. Follow-up action items (concrete, specific tasks to do)
+            2. Brainstorm ideas (observations, questions, directions to explore)
+            Respond ONLY with valid JSON:
+            {"actions": ["...", "..."], "brainstorms": ["...", "..."]}
+            Keep suggestions concise (1 sentence each). Return empty arrays if nothing applies.
+            """
+        let userMessage = "Task: \(itemText)\n\nNotes:\n\(notes)"
+        let response = try await client.send(system: system, userMessage: userMessage, maxTokens: 600)
+        let parsed = try parseJSON(response)
+        let actions = (parsed["actions"] as? [String] ?? []).map { $0.trimmingCharacters(in: .whitespaces) }
+        let brainstorms = (parsed["brainstorms"] as? [String] ?? []).map { $0.trimmingCharacters(in: .whitespaces) }
+        return NoteSuggestionsResult(actions: actions, brainstorms: brainstorms)
     }
 
     // MARK: - Helpers

@@ -132,15 +132,12 @@ struct ClusterCardView: View {
     private func itemRow(_ item: Item) -> some View {
         HStack(spacing: 8) {
             CategoryBadge(category: item.category)
-            Button { onItemTap?(item.id) } label: {
-                Text(item.category == .resource ? (item.urlTitle ?? item.text) : item.text)
-                    .font(.inter(12))
-                    .foregroundStyle(item.done ? Theme.textMuted : Theme.textPrimary)
-                    .lineLimit(2)
-                    .strikethrough(item.done)
-                    .multilineTextAlignment(.leading)
-            }
-            .buttonStyle(.plain)
+            Text(item.category == .resource ? (item.urlTitle ?? item.text) : item.text)
+                .font(.inter(12))
+                .foregroundStyle(item.done ? Theme.textMuted : Theme.textPrimary)
+                .lineLimit(2)
+                .strikethrough(item.done)
+                .multilineTextAlignment(.leading)
             Spacer()
             PriorityPicker(item: item, onChange: { onChanged?() })
             Button {
@@ -159,20 +156,25 @@ struct ClusterCardView: View {
                 Circle()
                     .strokeBorder(item.done ? Theme.greenDark : Theme.textMuted, lineWidth: 2)
                     .background(item.done ? Circle().fill(Theme.green) : nil)
-                    .frame(width: 16, height: 16)
+                    .frame(width: 22, height: 22)
                     .overlay {
                         if item.done {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 8, weight: .bold))
+                                .font(.system(size: 10, weight: .bold))
                                 .foregroundStyle(.white)
                         }
                     }
             }
             .buttonStyle(.plain)
+            .contentShape(Circle())
         }
         .padding(.vertical, 6)
         .padding(.horizontal, 10)
         .background(itemBackground(item.category), in: RoundedRectangle(cornerRadius: 8))
+        .contentShape(RoundedRectangle(cornerRadius: 8))
+        .onTapGesture {
+            onItemTap?(item.id)
+        }
     }
 
     private func itemBackground(_ category: Category) -> Color {
