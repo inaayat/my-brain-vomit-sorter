@@ -98,7 +98,11 @@ struct ExportService {
             md += "---\n\n## Daily Dumps (\(dumps.count) days)\n\n"
             for dump in dumps {
                 md += "### \(DailyDump.displayDate(dump.date))\n\n"
-                md += dump.content + "\n\n"
+                let lines = dump.content.components(separatedBy: "\n")
+                    .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+                for line in lines {
+                    md += "- \(line.trimmingCharacters(in: .whitespaces))\n\n"
+                }
             }
         }
 

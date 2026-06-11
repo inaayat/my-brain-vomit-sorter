@@ -7,10 +7,12 @@ class DailyDumpPanel: NSPanel {
     private init() {
         super.init(
             contentRect: NSRect(x: 0, y: 0, width: 520, height: 52),
-            styleMask: [.nonactivatingPanel, .fullSizeContentView, .borderless],
+            styleMask: [.titled, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
+        titlebarAppearsTransparent = true
+        titleVisibility = .hidden
         level = .floating
         isOpaque = false
         backgroundColor = .clear
@@ -40,7 +42,6 @@ class DailyDumpPanel: NSPanel {
         }))
         contentView = hostingView
         makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
     }
 }
 

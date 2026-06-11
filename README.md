@@ -135,7 +135,8 @@ cd ~/my-mind
 git pull
 swift build -c release
 cp .build/arm64-apple-macosx/release/MyMind /Applications/MyMind.app/Contents/MacOS/MyMind
-cp -R .build/arm64-apple-macosx/release/MyMind_MyMind.bundle /Applications/MyMind.app/Contents/MacOS/
+mkdir -p /Applications/MyMind.app/Contents/Resources && cp -R .build/arm64-apple-macosx/release/MyMind_MyMind.bundle /Applications/MyMind.app/Contents/Resources/
+codesign --force --sign - /Applications/MyMind.app/Contents/MacOS/MyMind && codesign --force --sign - /Applications/MyMind.app
 ```
 
 Then relaunch the app. Your data in `~/.my-mind/mind.db` is unaffected by updates.
@@ -171,7 +172,8 @@ cd ~/my-mind && git add -A && git commit -m "Update app" && git push
 cd ~/my-mind
 swift build -c release
 cp .build/arm64-apple-macosx/release/MyMind /Applications/MyMind.app/Contents/MacOS/MyMind
-cp -R .build/arm64-apple-macosx/release/MyMind_MyMind.bundle /Applications/MyMind.app/Contents/MacOS/
+mkdir -p /Applications/MyMind.app/Contents/Resources && cp -R .build/arm64-apple-macosx/release/MyMind_MyMind.bundle /Applications/MyMind.app/Contents/Resources/
+codesign --force --sign - /Applications/MyMind.app/Contents/MacOS/MyMind && codesign --force --sign - /Applications/MyMind.app
 ```
 
 ---
