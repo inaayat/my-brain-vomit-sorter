@@ -17,6 +17,7 @@ struct DailyDumpView: View {
     @State private var mergeSource: String? = nil
     @State private var editingTag: String? = nil
     @State private var editedTagName = ""
+    @State private var showRetired = false
     @State private var isUpdating = false
 
     var body: some View {
@@ -287,7 +288,9 @@ struct DailyDumpView: View {
 
     @ViewBuilder
     private func tagSearchResults(tag: String) -> some View {
-        let results = findBulletsByTag(tag)
+        let allResults = findBulletsByTag(tag, includeRetired: true)
+        let visibleResults = showRetired ? allResults : allResults.filter { !$0.isRetired }
+        let retiredCount = allResults.filter(\.isRetired).count
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "number")
@@ -296,18 +299,36 @@ struct DailyDumpView: View {
                 Text(tag)
                     .font(.inter(16, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
-                Text("\(results.count) bullets")
+                Text("\(allResults.count - retiredCount) bullets")
                     .font(.inter(11))
                     .foregroundStyle(Theme.textMuted)
+                Spacer()
+                if retiredCount > 0 {
+                    Button {
+                        withAnimation { showRetired.toggle() }
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: showRetired ? "eye.slash" : "eye")
+                                .font(.system(size: 9))
+                            Text(showRetired ? "Hide retired (\(retiredCount))" : "Show retired (\(retiredCount))")
+                                .font(.inter(9, weight: .medium))
+                        }
+                        .foregroundStyle(Theme.textMuted)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Theme.softGray.opacity(0.5), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
             }
 
-            if results.isEmpty {
+            if visibleResults.isEmpty {
                 Text("No bullets found with this tag.")
                     .font(.inter(13))
                     .foregroundStyle(Theme.textMuted)
                     .padding(.top, 20)
             } else {
-                ForEach(results, id: \.id) { result in
+                ForEach(visibleResults, id: \.id) { result in
                     tagResultRow(result)
                 }
             }
@@ -316,18 +337,31 @@ struct DailyDumpView: View {
 
     @ViewBuilder
     private func tagResultRow(_ result: TagSearchResult) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(result.dateDisplay)
-                .font(.inter(10, weight: .medium))
-                .foregroundStyle(Theme.textMuted)
-            Text(stripTags(result.bulletText))
-                .font(.inter(13))
-                .foregroundStyle(Theme.textPrimary)
-                .textSelection(.enabled)
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(result.dateDisplay)
+                    .font(.inter(10, weight: .medium))
+                    .foregroundStyle(Theme.textMuted)
+                Text(stripTags(result.bulletText))
+                    .font(.inter(13))
+                    .foregroundStyle(result.isRetired ? Theme.textMuted : Theme.textPrimary)
+                    .strikethrough(result.isRetired)
+                    .textSelection(.enabled)
+            }
+            Spacer()
+            Button {
+                toggleRetire(result: result)
+            } label: {
+                Image(systemName: result.isRetired ? "arrow.uturn.backward.circle" : "archivebox")
+                    .font(.system(size: 14))
+                    .foregroundStyle(result.isRetired ? Theme.greenDark : Theme.textMuted)
+            }
+            .buttonStyle(.plain)
+            .help(result.isRetired ? "Unretire" : "Retire")
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.cardBg, in: RoundedRectangle(cornerRadius: 8))
+        .background(result.isRetired ? Theme.softGray.opacity(0.3) : Theme.cardBg, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.border, lineWidth: 1))
     }
 
@@ -648,7 +682,7 @@ struct DailyDumpView: View {
         var count = 0
         for dump in allDumps {
             let bullets = DumpBullet.parse(from: dump.content)
-            count += bullets.filter { $0.tags.contains(tag) }.count
+            count += bullets.filter { $0.tags.contains(tag) && !$0.isRetired }.count
         }
         return count
     }
@@ -703,7 +737,7 @@ struct DailyDumpView: View {
         reload()
     }
 
-    private func findBulletsByTag(_ tag: String) -> [TagSearchResult] {
+    private func findBulletsByTag(_ tag: String, includeRetired: Bool = false) -> [TagSearchResult] {
         var results: [TagSearchResult] = []
         var allDumps = pastDumps
         if let today = todayDump { allDumps.insert(today, at: 0) }
@@ -712,13 +746,46 @@ struct DailyDumpView: View {
             for bullet in bullets where bullet.tags.contains(tag) {
                 results.append(TagSearchResult(
                     id: UUID(),
+                    dumpId: dump.id,
                     date: dump.date,
                     dateDisplay: DailyDump.displayDate(dump.date),
-                    bulletText: bullet.text
+                    bulletText: bullet.text,
+                    rawLine: bullet.rawLine,
+                    isRetired: bullet.isRetired
                 ))
             }
         }
         return results
+    }
+
+    private func toggleRetire(result: TagSearchResult) {
+        let marker = DumpBullet.retiredMarker
+        let isToday = result.date == DailyDump.today()
+
+        if result.isRetired {
+            let restored = result.rawLine.replacingOccurrences(of: marker, with: "")
+            if isToday {
+                content = content.replacingOccurrences(of: result.rawLine, with: restored)
+                saveDraft()
+            } else {
+                if let dump = pastDumps.first(where: { $0.id == result.dumpId }) {
+                    let updated = dump.content.replacingOccurrences(of: result.rawLine, with: restored)
+                    try? Queries.updateDumpContent(id: dump.id, content: updated)
+                }
+            }
+        } else {
+            let retired = result.rawLine + marker
+            if isToday {
+                content = content.replacingOccurrences(of: result.rawLine, with: retired)
+                saveDraft()
+            } else {
+                if let dump = pastDumps.first(where: { $0.id == result.dumpId }) {
+                    let updated = dump.content.replacingOccurrences(of: result.rawLine, with: retired)
+                    try? Queries.updateDumpContent(id: dump.id, content: updated)
+                }
+            }
+        }
+        reload()
     }
 
     private func handleContentChange(_ newValue: String) {
@@ -816,7 +883,10 @@ struct ProposedItem: Identifiable {
 
 struct TagSearchResult: Identifiable {
     let id: UUID
+    let dumpId: String
     let date: String
     let dateDisplay: String
     let bulletText: String
+    let rawLine: String
+    let isRetired: Bool
 }

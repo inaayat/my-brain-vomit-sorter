@@ -49,6 +49,10 @@ struct DumpBullet: Identifiable {
     let id = UUID()
     var text: String
     var tags: [String]
+    var isRetired: Bool
+    var rawLine: String
+
+    static let retiredMarker = " [retired]"
 
     static func parse(from content: String) -> [DumpBullet] {
         content
@@ -58,8 +62,10 @@ struct DumpBullet: Identifiable {
                 var cleaned = line
                 if cleaned.hasPrefix("• ") { cleaned = String(cleaned.dropFirst(2)) }
                 else if cleaned.hasPrefix("* ") { cleaned = String(cleaned.dropFirst(2)) }
+                let retired = cleaned.hasSuffix(retiredMarker)
+                if retired { cleaned = String(cleaned.dropLast(retiredMarker.count)) }
                 let tags = extractTags(from: cleaned)
-                return DumpBullet(text: cleaned, tags: tags)
+                return DumpBullet(text: cleaned, tags: tags, isRetired: retired, rawLine: line)
             }
     }
 
