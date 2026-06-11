@@ -92,6 +92,7 @@ The app connects to Ollama at `localhost:11434`. If Ollama isn't running, AI fea
 - **Tag rename**: Double-click any tag pill to rename it — applies the change across all days
 - **Tag merge**: Drag one tag onto another to merge them (the tag with fewer bullets takes the name of the larger one)
 - **Tag click**: Single-click a tag pill to see all bullets with that tag across all days
+- **Retire/archive**: Archive icon on each bullet in tag search hides it without deleting. "Show retired" toggle reveals them.
 - **AI Analyze**: Parses your dump into proposed actions, brainstorms, wins, or resources — review and accept individually
 - **AI Tag Suggestions**: Analyze also suggests `#tags` for untagged bullets based on patterns — accept with one click
 

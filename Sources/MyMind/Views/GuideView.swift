@@ -70,6 +70,8 @@ struct GuideView: View {
                     guideBullet(icon: "magnifyingglass", text: "Filter tags with the search field (appears with 8+ tags)")
                     guideBullet(icon: "hand.tap", text: "Click a tag pill to filter bullets; double-click to rename it everywhere")
                     guideBullet(icon: "arrow.triangle.merge", text: "Drag one tag onto another to merge them (fewer bullets → more bullets)")
+                    guideBullet(icon: "archivebox", text: "Retire bullets from tag search — archive icon hides them without deleting")
+                    guideBullet(icon: "eye", text: "'Show retired' toggle reveals archived bullets (strikethrough style)")
                     guideBullet(icon: "sparkles", text: "'Analyze with AI' parses into actions, brainstorms, wins, or resources")
                     guideBullet(icon: "tag", text: "AI also suggests tags for untagged bullets — accept with one click")
                     guideBullet(icon: "lock", text: "Past days auto-lock — click 'Unlock' to edit them")
