@@ -225,6 +225,8 @@ struct OverviewView: View {
                 try? Queries.completeItem(id: item.id)
                 reload()
                 appState.refreshCounts()
+                appState.completedItem = item
+                appState.showLogWinSheet = true
             } onDrop: { draggedId in
                 appState.createClusterFromDrop(draggedId: draggedId, targetId: item.id)
                 reload()

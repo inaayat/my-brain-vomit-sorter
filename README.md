@@ -192,7 +192,7 @@ my-mind/
 │   ├── FontLoader.swift       # Inter font registration
 │   ├── Models/                # Data models (Item, Cluster, Comment, Link, Win, DailyDump)
 │   ├── Database/              # SQLite via GRDB (migrations, queries)
-│   ├── AI/                    # Anthropic API + Ollama fallback
+│   ├── AI/                    # Ollama-powered AI (local, private)
 │   ├── ViewModels/            # Observable state management
 │   └── Views/                 # All SwiftUI views (incl. DailyDumpView)
 └── Resources/                 # Inter font files (.ttf)
@@ -202,12 +202,32 @@ my-mind/
 
 ## Color Palette
 
+### Normal Mode
 | Element | Hex |
 |---------|-----|
 | Canvas background | `#F5EFE6` |
-| Action cards | `#EAF2D9` |
-| Brainstorm cards | `#FBEAF1` |
-| Resource cards | `#EEF3FB` |
+| Card background | `#FFFFFF` |
+| Action (green) | `#9CAF6C` / tint `#C9D7A3` |
+| Brainstorm (pink) | `#E78AB6` / tint `#F4B6D3` |
+| Resource (blue) | `#9FB7D9` / tint `#C9D8EF` |
 | Cluster cards | `#FBF5E3` |
 | Sidebar | `#0F0F10` |
 | Accent (purple) | `#A75A8A` |
+| Text primary | `#0F0F10` |
+| Text muted | `#7A7A7A` |
+| Divider | `#E6E0D6` |
+
+### Bro Mode
+| Element | Source |
+|---------|--------|
+| Canvas background | `NSColor.windowBackgroundColor` (system dark) |
+| Card background | `NSColor.controlBackgroundColor` |
+| All category colors | `NSColor.systemGray` (monochrome) |
+| Tints | `#2C2C2E` (flat dark surface) |
+| Text primary | `NSColor.labelColor` |
+| Text secondary | `NSColor.secondaryLabelColor` |
+| Text muted | `NSColor.tertiaryLabelColor` |
+| Accents | `NSColor.secondaryLabelColor` (no color pop) |
+| Sidebar | `#0F0F10` (unchanged) |
+
+Bro mode uses Apple's native dark mode semantic colors — no custom hex values, adapts automatically to system appearance.
