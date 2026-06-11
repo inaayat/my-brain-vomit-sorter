@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct Sidebar: View {
     @Bindable var appState: AppState
@@ -25,6 +26,15 @@ struct Sidebar: View {
                 iconButton(.clusters, icon: "rectangle.3.group", tooltip: "Clusters")
                 iconButton(.completed, icon: "checkmark.circle", tooltip: "Completed")
                 iconButton(.wins, icon: "trophy.fill", tooltip: "Wins")
+
+                Button { exportData() } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(Theme.sidebarMuted)
+                        .frame(width: 38, height: 38)
+                }
+                .buttonStyle(.plain)
+                .help("Export Data")
             }
 
             Spacer()
@@ -47,6 +57,19 @@ struct Sidebar: View {
         }
         .frame(width: 64)
         .background(Theme.sidebarBg)
+    }
+
+    private func exportData() {
+        let markdown = ExportService.generateMarkdown()
+        let panel = NSSavePanel()
+        let dateStr = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
+            .replacingOccurrences(of: "/", with: "-")
+        panel.nameFieldStringValue = "mymind-export-\(dateStr).md"
+        panel.allowedContentTypes = [.plainText]
+        panel.canCreateDirectories = true
+        if panel.runModal() == .OK, let url = panel.url {
+            try? markdown.write(to: url, atomically: true, encoding: .utf8)
+        }
     }
 
     @ViewBuilder

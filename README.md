@@ -81,6 +81,7 @@ The app connects to Ollama at `localhost:11434`. If Ollama isn't running, AI fea
 | **Due Dates** | Set optional due dates on any item. Badge shows next to text (red overdue, orange today/tomorrow). Items due today/tomorrow auto-promote to high priority. |
 | **Wins** | Achievement log. Log wins directly from the Wins view, on task completion, or via AI Analyze. Attach artifact URLs. |
 | **Completed** | All done items across all categories. |
+| **Export** | One-click export of all data (items, clusters, wins, daily dumps) as a readable Markdown file. |
 
 ### Daily Dump
 - **Sidebar tab**: Full notepad view with today's editor, past days (read-only with unlock), and tag search
@@ -103,6 +104,7 @@ The app connects to Ollama at `localhost:11434`. If Ollama isn't running, AI fea
 - **100% local**: All AI runs through Ollama (llama3.2) on your machine — no data leaves your computer
 
 ### UX
+- **Export**: Sidebar button exports all data as a clean Markdown file via save dialog
 - **Menu bar**: Brain icon in the menu bar with "Add Note", "Add Action", and "Open MyMind"
 - **Global hotkeys**: `Ctrl+Option+N` (Add Note), `Ctrl+Option+A` (Add Action) — requires Accessibility permission
 - **Inline editing**: Double-click any card to edit text, category, priority, and due date directly

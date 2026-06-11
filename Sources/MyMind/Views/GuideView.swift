@@ -92,6 +92,7 @@ struct GuideView: View {
                     guideBullet(icon: "rectangle.3.group", text: "Clusters — manage, merge, delete clusters")
                     guideBullet(icon: "checkmark.circle", text: "Completed — all finished items")
                     guideBullet(icon: "trophy.fill", text: "Wins — your achievement log")
+                    guideBullet(icon: "square.and.arrow.up", text: "Export — saves all data as a readable Markdown file")
                     guideBullet(icon: "brain.head.profile", text: "This guide (you're here)")
                     guideBullet(icon: "switch.2", text: "Bro Mode toggle at the bottom — switches to Apple dark mode aesthetic")
                 }
