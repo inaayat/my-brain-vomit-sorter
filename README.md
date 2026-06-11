@@ -59,20 +59,33 @@ The app checks Ollama first at `localhost:11434` and only falls back to the Anth
 | **Actions** | Tasks with checkboxes. Complete them from any view. Log a "Win" on completion. |
 | **Brainstorms** | Ideas and observations. Auto-clustered by AI into themed groups. |
 | **Resources** | URLs with display titles. Attach multiple resources to any action or brainstorm. |
-| **Notes** | Rich notes field on any item. Bullet points via `*` key. Expands to 75% of the detail panel. |
+| **Notes** | Rich notes field on any item. Auto-expands up to 50% of the detail panel. |
 | **Clusters** | Drag one item onto another to create a group. AI names it. Expand/collapse. |
+| **Daily Dump** | Freeform daily notepad. Auto-dated, bullet-pointed. Use `#tags` to organize. AI parses into action items. |
+| **Due Dates** | Set optional due dates on any item. Badge shows next to text (red overdue, orange today/tomorrow). |
 | **Wins** | Achievement log. When you complete a task, record what you achieved + link to artifact. |
 | **Completed** | All done items across all categories. |
+
+### Daily Dump
+- **Sidebar tab**: Full notepad view with today's editor, past days (read-only with unlock), and tag search
+- **Floating panel**: `Ctrl+Option+N` or menu bar → "Add Note" — quick-append a bullet to today's dump
+- **Auto-bullets**: Every line starts with "•" automatically
+- **#Tags**: Type `#project-name` inline to tag bullets. All tags appear as clickable pills for filtering
+- **Tag search**: Click any tag pill to see all bullets with that tag across all days
+- **AI Analyze**: Parses your dump into proposed action items and brainstorms — review and accept individually
 
 ### AI Features
 - **Auto-categorize**: On every capture (Auto mode), AI picks category (action/brainstorm/resource), cleans text, and generates tags
 - **Auto-cluster**: After saving, AI assigns the item to an existing cluster or creates a new one with a generated title
 - **Drag-to-cluster title**: When you drag two items together, AI names the new cluster
+- **Dump analysis**: AI parses daily dump into discrete action items and brainstorms for review
 - **Notes analysis**: Save notes on any item → AI suggests follow-up actions and brainstorm ideas you can add with one click
 - **Ollama-first**: Always uses local Ollama (llama3.2) when available; falls back to Anthropic API only if Ollama is down
 
 ### UX
-- **Global hotkey**: `Ctrl+Option+M` opens a floating capture panel over any app
+- **Menu bar**: Brain icon in the menu bar with "Add Note", "Add Action", and "Open MyMind"
+- **Global hotkeys**: `Ctrl+Option+N` (Add Note), `Ctrl+Option+A` (Add Action) — requires Accessibility permission
+- **Inline editing**: Double-click any card to edit text, category, priority, and due date directly
 - **Detail panel**: Click any item → slides in from the right (40% width)
 - **Resource linking**: Paste a URL or search existing resources to attach them to any item; link icon shows on cards
 - **Log Win on complete**: Completing any item (from feed, clusters, or detail) prompts you to record your achievement
@@ -148,15 +161,17 @@ cp -R .build/arm64-apple-macosx/release/MyMind_MyMind.bundle /Applications/MyMin
 my-mind/
 ├── Package.swift              # Dependencies (GRDB)
 ├── Sources/MyMind/
-│   ├── MyMindApp.swift        # App entry point, window management
-│   ├── HotkeyManager.swift   # Ctrl+Option+M global hotkey
-│   ├── QuickCapturePanel.swift # Floating capture overlay
+│   ├── MyMindApp.swift        # App entry point, menu bar, window management
+│   ├── HotkeyManager.swift   # Global hotkeys (Ctrl+Option+N, Ctrl+Option+A)
+│   ├── QuickCapturePanel.swift # Floating capture overlay (legacy)
+│   ├── QuickActionPanel.swift  # Floating "Add Action" panel
+│   ├── DailyDumpPanel.swift    # Floating "Add Note" panel for daily dump
 │   ├── FontLoader.swift       # Inter font registration
-│   ├── Models/                # Data models (Item, Cluster, Comment, Link, Win)
+│   ├── Models/                # Data models (Item, Cluster, Comment, Link, Win, DailyDump)
 │   ├── Database/              # SQLite via GRDB (migrations, queries)
 │   ├── AI/                    # Anthropic API + Ollama fallback
 │   ├── ViewModels/            # Observable state management
-│   └── Views/                 # All SwiftUI views
+│   └── Views/                 # All SwiftUI views (incl. DailyDumpView)
 └── Resources/                 # Inter font files (.ttf)
 ```
 

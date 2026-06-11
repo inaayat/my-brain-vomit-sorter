@@ -20,9 +20,11 @@ struct GuideView: View {
 
                 guideSection(title: "Quick Start", color: Theme.purple) {
                     guideBullet(icon: "plus.bubble.fill", text: "Type in the capture bar to add a thought — AI auto-categorizes it")
-                    guideBullet(icon: "keyboard", text: "Ctrl+Option+M opens the floating capture overlay from anywhere")
+                    guideBullet(icon: "brain.head.profile", text: "Menu bar brain icon → Add Note, Add Action, or Open MyMind")
+                    guideBullet(icon: "keyboard", text: "Ctrl+Option+N opens the Daily Dump notepad from anywhere")
+                    guideBullet(icon: "keyboard", text: "Ctrl+Option+A opens the quick action capture from anywhere")
                     guideBullet(icon: "hand.draw", text: "Drag one item onto another to create a Cluster")
-                    guideBullet(icon: "arrow.up", text: "Click the priority circle to cycle: Standard → High → Backlog")
+                    guideBullet(icon: "cursorarrow.click.2", text: "Double-click any card to edit inline (text, category, priority, due date)")
                 }
 
                 guideSection(title: "Feed View", color: Theme.textPrimary) {
@@ -56,17 +58,29 @@ struct GuideView: View {
                     guideText("When you complete any item, you're prompted to 'Log Win' — record what you achieved and link an artifact (URL to PR, doc, etc). Builds your brag doc over time.")
                 }
 
+                guideSection(title: "Daily Dump", color: Theme.purple) {
+                    guideText("A freeform daily notepad for brain-dumping throughout the day.")
+                    guideBullet(icon: "list.bullet.rectangle.portrait", text: "Sidebar icon opens the full notepad view")
+                    guideBullet(icon: "keyboard", text: "Ctrl+Option+N or menu bar → 'Add Note' for quick bullet entry")
+                    guideBullet(icon: "number", text: "Type #tag-name inline to tag bullets (e.g. #accounting-center)")
+                    guideBullet(icon: "magnifyingglass", text: "Click any tag pill to see all bullets with that tag across all days")
+                    guideBullet(icon: "sparkles", text: "'Analyze with AI' parses your dump into action items and brainstorms")
+                    guideBullet(icon: "lock", text: "Past days auto-lock — click 'Unlock' to edit them")
+                }
+
                 guideSection(title: "Capture Options", color: Theme.blueDark) {
                     guideText("When typing a new thought, expanded options appear:")
                     guideBullet(icon: "tag", text: "Category pills: Auto, Action, Brainstorm, Resource")
-                    guideBullet(icon: "calendar", text: "Due date toggle")
+                    guideBullet(icon: "calendar", text: "Due date picker — set optional deadlines")
                     guideBullet(icon: "link", text: "URL + URL title fields")
                     guideBullet(icon: "rectangle.3.group", text: "Add to cluster (type-to-search)")
                     guideBullet(icon: "bookmark", text: "Link existing resource (dropdown)")
+                    guideText("Press Enter to submit. Shift+Enter for a new line.")
                 }
 
                 guideSection(title: "Sidebar", color: Theme.textMuted) {
                     guideBullet(icon: "square.grid.2x2", text: "Feed — main view with filter cards")
+                    guideBullet(icon: "list.bullet.rectangle.portrait", text: "Daily Dump — freeform notepad with tag search")
                     guideBullet(icon: "rectangle.3.group", text: "Clusters — manage, merge, delete clusters")
                     guideBullet(icon: "checkmark.circle", text: "Completed — all finished items")
                     guideBullet(icon: "trophy.fill", text: "Wins — your achievement log")
