@@ -11,6 +11,12 @@ struct DailyDumpView: View {
     @State private var expandedPastDays: Set<String> = []
     @State private var showGuide = false
     @State private var searchTag: String? = nil
+    @State private var tagFilter = ""
+    @State private var mergeTarget: String? = nil
+    @State private var showMergeConfirm = false
+    @State private var mergeSource: String? = nil
+    @State private var editingTag: String? = nil
+    @State private var editedTagName = ""
     @State private var isUpdating = false
 
     var body: some View {
@@ -122,53 +128,159 @@ struct DailyDumpView: View {
     // MARK: - Tag Bar & Search
 
     private var tagBar: some View {
-        let allTagsFromAllDumps = collectAllTags()
+        let allTags = collectAllTags()
+        let filteredTags = tagFilter.isEmpty ? allTags : allTags.filter { $0.localizedCaseInsensitiveContains(tagFilter) }
         return Group {
-            if !allTagsFromAllDumps.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(allTagsFromAllDumps, id: \.self) { tag in
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.15)) {
-                                    searchTag = (searchTag == tag) ? nil : tag
-                                }
-                            } label: {
-                                HStack(spacing: 3) {
-                                    Image(systemName: "number")
-                                        .font(.system(size: 8, weight: .bold))
-                                    Text(tag)
-                                        .font(.inter(10, weight: .medium))
-                                }
-                                .foregroundStyle(searchTag == tag ? .white : Theme.purple)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(
-                                    searchTag == tag ? Theme.purple : Theme.purple.opacity(0.1),
-                                    in: Capsule()
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
-
-                        if searchTag != nil {
-                            Button {
-                                withAnimation { searchTag = nil }
-                            } label: {
-                                HStack(spacing: 3) {
-                                    Image(systemName: "xmark")
-                                        .font(.system(size: 8, weight: .bold))
-                                    Text("Clear")
-                                        .font(.inter(10))
-                                }
+            if !allTags.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    if allTags.count > 8 {
+                        HStack(spacing: 6) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 10))
                                 .foregroundStyle(Theme.textMuted)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Theme.softGray, in: Capsule())
+                            TextField("Filter tags...", text: $tagFilter)
+                                .textFieldStyle(.plain)
+                                .font(.inter(11))
+                                .frame(maxWidth: 180)
+                            if !tagFilter.isEmpty {
+                                Button {
+                                    tagFilter = ""
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(Theme.textMuted)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Theme.softGray.opacity(0.5), in: Capsule())
+                    }
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(filteredTags, id: \.self) { tag in
+                                tagPill(tag)
+                            }
+
+                            if searchTag != nil {
+                                Button {
+                                    withAnimation { searchTag = nil }
+                                } label: {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 8, weight: .bold))
+                                        Text("Clear")
+                                            .font(.inter(10))
+                                    }
+                                    .foregroundStyle(Theme.textMuted)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Theme.softGray, in: Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
                     }
+
+                    if allTags.count > 8 {
+                        Text("Drag a tag onto another to merge them")
+                            .font(.inter(9))
+                            .foregroundStyle(Theme.textMuted)
+                    }
                 }
+                .alert("Merge Tags", isPresented: $showMergeConfirm) {
+                    Button("Merge") { performMerge() }
+                    Button("Cancel", role: .cancel) { mergeSource = nil; mergeTarget = nil }
+                } message: {
+                    if let src = mergeSource, let tgt = mergeTarget {
+                        Text("Replace all #\(src) with #\(tgt)? This updates every bullet across all days.")
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func tagPill(_ tag: String) -> some View {
+        let isSelected = searchTag == tag
+        if editingTag == tag {
+            HStack(spacing: 3) {
+                Image(systemName: "number")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(Theme.purple)
+                TextField("", text: $editedTagName)
+                    .textFieldStyle(.plain)
+                    .font(.inter(10, weight: .medium))
+                    .frame(minWidth: 50, maxWidth: 120)
+                    .onSubmit { commitTagRename(from: tag) }
+                Button {
+                    commitTagRename(from: tag)
+                } label: {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.greenDark)
+                }
+                .buttonStyle(.plain)
+                Button {
+                    editingTag = nil
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textMuted)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Theme.purple.opacity(0.15), in: Capsule())
+            .overlay(Capsule().strokeBorder(Theme.purple, lineWidth: 1))
+        } else {
+            HStack(spacing: 3) {
+                Image(systemName: "number")
+                    .font(.system(size: 8, weight: .bold))
+                Text(tag)
+                    .font(.inter(10, weight: .medium))
+                Text("(\(tagCount(tag)))")
+                    .font(.inter(9))
+                    .foregroundStyle(isSelected ? .white.opacity(0.7) : Theme.textMuted)
+            }
+            .foregroundStyle(isSelected ? .white : Theme.purple)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                isSelected ? Theme.purple : Theme.purple.opacity(0.1),
+                in: Capsule()
+            )
+            .overlay(
+                mergeTarget == tag ? Capsule().strokeBorder(Theme.greenDark, lineWidth: 2) : nil
+            )
+            .onTapGesture(count: 2) {
+                editingTag = tag
+                editedTagName = tag
+            }
+            .onTapGesture(count: 1) {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    searchTag = (searchTag == tag) ? nil : tag
+                }
+            }
+            .draggable(tag)
+            .dropDestination(for: String.self) { dropped, _ in
+                guard let source = dropped.first, source != tag else { return false }
+                let srcCount = tagCount(source)
+                let tgtCount = tagCount(tag)
+                if srcCount > tgtCount {
+                    mergeSource = tag
+                    mergeTarget = source
+                } else {
+                    mergeSource = source
+                    mergeTarget = tag
+                }
+                showMergeConfirm = true
+                return true
+            } isTargeted: { targeted in
+                mergeTarget = targeted ? tag : nil
             }
         }
     }
@@ -528,6 +640,67 @@ struct DailyDumpView: View {
             }
         }
         return tagSet.sorted()
+    }
+
+    private func tagCount(_ tag: String) -> Int {
+        var allDumps = pastDumps
+        if let today = todayDump { allDumps.insert(today, at: 0) }
+        var count = 0
+        for dump in allDumps {
+            let bullets = DumpBullet.parse(from: dump.content)
+            count += bullets.filter { $0.tags.contains(tag) }.count
+        }
+        return count
+    }
+
+    private func performMerge() {
+        guard let source = mergeSource, let target = mergeTarget else { return }
+        let hashSource = "#\(source)"
+        let hashTarget = "#\(target)"
+
+        // Replace in today's content
+        content = content.replacingOccurrences(of: hashSource, with: hashTarget)
+        saveDraft()
+
+        // Replace in all past dumps
+        for dump in pastDumps {
+            let updated = dump.content.replacingOccurrences(of: hashSource, with: hashTarget)
+            if updated != dump.content {
+                try? Queries.updateDumpContent(id: dump.id, content: updated)
+            }
+        }
+
+        mergeSource = nil
+        mergeTarget = nil
+        reload()
+    }
+
+    private func commitTagRename(from oldTag: String) {
+        let newTag = editedTagName
+            .trimmingCharacters(in: .whitespaces)
+            .lowercased()
+            .replacingOccurrences(of: " ", with: "-")
+            .replacingOccurrences(of: "#", with: "")
+        guard !newTag.isEmpty, newTag != oldTag else {
+            editingTag = nil
+            return
+        }
+        let hashOld = "#\(oldTag)"
+        let hashNew = "#\(newTag)"
+
+        content = content.replacingOccurrences(of: hashOld, with: hashNew)
+        saveDraft()
+
+        for dump in pastDumps {
+            let updated = dump.content.replacingOccurrences(of: hashOld, with: hashNew)
+            if updated != dump.content {
+                try? Queries.updateDumpContent(id: dump.id, content: updated)
+            }
+        }
+
+        editingTag = nil
+        if searchTag == oldTag { searchTag = newTag }
+        reload()
     }
 
     private func findBulletsByTag(_ tag: String) -> [TagSearchResult] {

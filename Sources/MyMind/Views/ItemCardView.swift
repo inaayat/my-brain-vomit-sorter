@@ -269,6 +269,10 @@ struct ItemCardView: View {
         updated.category = editCategory
         updated.priority = editPriority
         updated.dueDate = editDueDate
+        if let due = updated.dueDate {
+            let tomorrow = Calendar.current.date(byAdding: .day, value: 2, to: Calendar.current.startOfDay(for: Date()))!
+            if due < tomorrow { updated.priority = .high }
+        }
         try? Queries.updateItem(updated)
         isEditing = false
         onChange?()

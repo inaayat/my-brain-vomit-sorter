@@ -82,11 +82,39 @@ struct InlineCaptureView: View {
                     }
 
                     HStack(spacing: 12) {
-                        DatePicker("Due", selection: $dueDate, displayedComponents: .date)
-                            .labelsHidden()
-                            .controlSize(.small)
-                            .frame(maxWidth: 130)
-                            .onChange(of: dueDate) { _, _ in hasDueDate = true }
+                        if hasDueDate {
+                            DatePicker("Due", selection: $dueDate, displayedComponents: .date)
+                                .labelsHidden()
+                                .controlSize(.small)
+                                .frame(maxWidth: 130)
+                            Button {
+                                hasDueDate = false
+                                dueDate = Date()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Theme.textMuted)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Remove due date")
+                        } else {
+                            Button {
+                                hasDueDate = true
+                                dueDate = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "calendar")
+                                        .font(.system(size: 10))
+                                    Text("Set due date")
+                                        .font(.inter(10))
+                                }
+                                .foregroundStyle(Theme.textMuted)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Theme.softGray.opacity(0.5), in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
 
                         TextField("URL (optional)", text: $urlText)
                             .textFieldStyle(.roundedBorder)
@@ -196,6 +224,10 @@ struct InlineCaptureView: View {
             )
             if !tags.isEmpty {
                 item.tags = try? String(data: JSONEncoder().encode(tags), encoding: .utf8)
+            }
+            if let due = item.dueDate {
+                let tomorrow = Calendar.current.date(byAdding: .day, value: 2, to: Calendar.current.startOfDay(for: Date()))!
+                if due < tomorrow { item.priority = .high }
             }
             try? Queries.addItem(item)
 

@@ -52,6 +52,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Initialize database
         _ = DatabaseManager.shared
 
+        // Auto-promote items due today/tomorrow to high priority
+        try? Queries.promoteDueSoonToHigh()
+
         // Register global hotkeys
         HotkeyManager.shared.onHotkey = {
             QuickActionPanel.shared.toggle()

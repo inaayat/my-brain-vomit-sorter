@@ -67,7 +67,9 @@ struct GuideView: View {
                     guideBullet(icon: "list.bullet.rectangle.portrait", text: "Sidebar icon opens the full notepad view")
                     guideBullet(icon: "keyboard", text: "Ctrl+Option+N or menu bar → 'Add Note' for quick bullet entry")
                     guideBullet(icon: "number", text: "Type #tag-name or start with * for auto-bullets")
-                    guideBullet(icon: "magnifyingglass", text: "Click any tag pill to see all bullets with that tag across all days")
+                    guideBullet(icon: "magnifyingglass", text: "Filter tags with the search field (appears with 8+ tags)")
+                    guideBullet(icon: "hand.tap", text: "Click a tag pill to filter bullets; double-click to rename it everywhere")
+                    guideBullet(icon: "arrow.triangle.merge", text: "Drag one tag onto another to merge them (fewer bullets → more bullets)")
                     guideBullet(icon: "sparkles", text: "'Analyze with AI' parses into actions, brainstorms, wins, or resources")
                     guideBullet(icon: "tag", text: "AI also suggests tags for untagged bullets — accept with one click")
                     guideBullet(icon: "lock", text: "Past days auto-lock — click 'Unlock' to edit them")
@@ -76,7 +78,8 @@ struct GuideView: View {
                 guideSection(title: "Capture Options", color: Theme.blueDark) {
                     guideText("When typing a new thought, expanded options appear:")
                     guideBullet(icon: "tag", text: "Category pills: Auto, Action, Brainstorm, Resource")
-                    guideBullet(icon: "calendar", text: "Due date picker — set optional deadlines")
+                    guideBullet(icon: "calendar", text: "'Set due date' button — starts blank, click to add, X to clear")
+                    guideBullet(icon: "arrow.up", text: "Items due today or tomorrow are auto-promoted to high priority")
                     guideBullet(icon: "link", text: "URL + URL title fields")
                     guideBullet(icon: "rectangle.3.group", text: "Add to cluster (type-to-search)")
                     guideBullet(icon: "bookmark", text: "Link existing resource (dropdown)")
@@ -102,13 +105,9 @@ struct GuideView: View {
                 }
 
                 guideSection(title: "AI Setup", color: Theme.textMuted) {
-                    guideText("AI categorizes items and names clusters. Configure in ~/.my-mind/config.json:")
-                    Text("{\"apiKey\": \"sk-ant-...\"}")
-                        .font(.inter(11))
-                        .foregroundStyle(Theme.textMuted)
-                        .padding(8)
-                        .background(Theme.softGray, in: RoundedRectangle(cornerRadius: Theme.radius(6)))
-                    guideText("Or use Ollama for free local AI: brew install ollama && ollama pull llama3.2")
+                    guideText("AI categorizes items and names clusters. Powered by local Ollama (free, private, no API key).")
+                    guideText("Install: brew install ollama && ollama pull llama3.2")
+                    guideText("Run: ollama serve (or launch the Ollama Mac app)")
                 }
             }
             .padding(28)

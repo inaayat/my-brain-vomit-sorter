@@ -60,6 +60,23 @@ struct Queries {
         }
     }
 
+    static func promoteDueSoonToHigh() throws {
+        let today = Calendar.current.startOfDay(for: Date())
+        let dayAfterTomorrow = Calendar.current.date(byAdding: .day, value: 2, to: today)!
+        try db.write { db in
+            try db.execute(
+                sql: """
+                    UPDATE items SET priority = ?
+                    WHERE done = 0
+                      AND dueDate IS NOT NULL
+                      AND dueDate < ?
+                      AND priority != ?
+                    """,
+                arguments: [Priority.high.rawValue, dayAfterTomorrow, Priority.high.rawValue]
+            )
+        }
+    }
+
     static func completeItem(id: String) throws {
         try db.write { db in
             try db.execute(
