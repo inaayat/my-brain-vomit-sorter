@@ -54,10 +54,10 @@ struct OverviewView: View {
 
     private var filterChips: some View {
         HStack(spacing: 14) {
-            filterCard(label: "All Open", count: allItems.count, category: nil, icon: "tray.full.fill", tint: Theme.softGray, color: Theme.textPrimary)
             filterCard(label: "Actions", count: counts[.action] ?? 0, category: .action, icon: "bolt.fill", tint: Theme.greenTint, color: Theme.greenDark)
             filterCard(label: "Brainstorms", count: counts[.brainstorm] ?? 0, category: .brainstorm, icon: "cloud.bolt.fill", tint: Theme.pinkTint, color: Theme.pinkDark)
             filterCard(label: "Resources", count: counts[.resource] ?? 0, category: .resource, icon: "bookmark.fill", tint: Theme.blueTint, color: Theme.blueDark)
+            filterCard(label: "All Open", count: allItems.count, category: nil, icon: "tray.full.fill", tint: Theme.softGray, color: Theme.textPrimary)
         }
     }
 
