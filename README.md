@@ -63,7 +63,7 @@ The app checks Ollama first at `localhost:11434` and only falls back to the Anth
 | **Clusters** | Drag one item onto another to create a group. AI names it. Expand/collapse. |
 | **Daily Dump** | Freeform daily notepad. Auto-dated, bullet-pointed. Use `#tags` to organize. AI parses into action items. |
 | **Due Dates** | Set optional due dates on any item. Badge shows next to text (red overdue, orange today/tomorrow). |
-| **Wins** | Achievement log. When you complete a task, record what you achieved + link to artifact. |
+| **Wins** | Achievement log. Log wins directly from the Wins view, on task completion, or via AI Analyze. Attach artifact URLs. |
 | **Completed** | All done items across all categories. |
 
 ### Daily Dump
@@ -72,13 +72,14 @@ The app checks Ollama first at `localhost:11434` and only falls back to the Anth
 - **Auto-bullets**: Every line starts with "•" automatically
 - **#Tags**: Type `#project-name` inline to tag bullets. All tags appear as clickable pills for filtering
 - **Tag search**: Click any tag pill to see all bullets with that tag across all days
-- **AI Analyze**: Parses your dump into proposed action items and brainstorms — review and accept individually
+- **AI Analyze**: Parses your dump into proposed actions, brainstorms, wins, or resources — review and accept individually
+- **AI Tag Suggestions**: Analyze also suggests `#tags` for untagged bullets based on patterns — accept with one click
 
 ### AI Features
 - **Auto-categorize**: On every capture (Auto mode), AI picks category (action/brainstorm/resource), cleans text, and generates tags
 - **Auto-cluster**: After saving, AI assigns the item to an existing cluster or creates a new one with a generated title
 - **Drag-to-cluster title**: When you drag two items together, AI names the new cluster
-- **Dump analysis**: AI parses daily dump into discrete action items and brainstorms for review
+- **Dump analysis**: AI parses daily dump into actions, brainstorms, wins, and resources + suggests tags for untagged bullets
 - **Notes analysis**: Save notes on any item → AI suggests follow-up actions and brainstorm ideas you can add with one click
 - **Ollama-first**: Always uses local Ollama (llama3.2) when available; falls back to Anthropic API only if Ollama is down
 

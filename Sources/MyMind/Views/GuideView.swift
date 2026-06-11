@@ -55,16 +55,21 @@ struct GuideView: View {
                 }
 
                 guideSection(title: "Wins", color: Theme.yellowDark) {
-                    guideText("When you complete any item, you're prompted to 'Log Win' — record what you achieved and link an artifact (URL to PR, doc, etc). Builds your brag doc over time.")
+                    guideText("Your achievement log — builds a brag doc over time.")
+                    guideBullet(icon: "plus", text: "'Log Win' button in the Wins view — record a win directly without completing a task")
+                    guideBullet(icon: "checkmark.circle", text: "Completing any item also prompts you to log a win")
+                    guideBullet(icon: "link", text: "Attach an artifact URL (PR, doc, slide deck) to any win")
+                    guideBullet(icon: "sparkles", text: "AI Analyze in Daily Dump can also suggest wins from your notes")
                 }
 
                 guideSection(title: "Daily Dump", color: Theme.purple) {
                     guideText("A freeform daily notepad for brain-dumping throughout the day.")
                     guideBullet(icon: "list.bullet.rectangle.portrait", text: "Sidebar icon opens the full notepad view")
                     guideBullet(icon: "keyboard", text: "Ctrl+Option+N or menu bar → 'Add Note' for quick bullet entry")
-                    guideBullet(icon: "number", text: "Type #tag-name inline to tag bullets (e.g. #accounting-center)")
+                    guideBullet(icon: "number", text: "Type #tag-name or start with * for auto-bullets")
                     guideBullet(icon: "magnifyingglass", text: "Click any tag pill to see all bullets with that tag across all days")
-                    guideBullet(icon: "sparkles", text: "'Analyze with AI' parses your dump into action items and brainstorms")
+                    guideBullet(icon: "sparkles", text: "'Analyze with AI' parses into actions, brainstorms, wins, or resources")
+                    guideBullet(icon: "tag", text: "AI also suggests tags for untagged bullets — accept with one click")
                     guideBullet(icon: "lock", text: "Past days auto-lock — click 'Unlock' to edit them")
                 }
 

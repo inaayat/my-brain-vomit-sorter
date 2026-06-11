@@ -3,6 +3,9 @@ import SwiftUI
 struct WinsView: View {
     @Bindable var appState: AppState
     @State private var wins: [(win: Win, item: Item?)] = []
+    @State private var showAddWin = false
+    @State private var newWinText = ""
+    @State private var newWinArtifact = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -16,10 +19,54 @@ struct WinsView: View {
                 Text("\(wins.count) logged")
                     .font(.inter(11))
                     .foregroundStyle(Theme.textMuted)
+                Button {
+                    showAddWin.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 10, weight: .bold))
+                        Text("Log Win")
+                            .font(.inter(11, weight: .semibold))
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.yellowDark)
+                .controlSize(.small)
             }
             .padding(.horizontal, 24)
             .padding(.top, 20)
             .padding(.bottom, 12)
+
+            if showAddWin {
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("What did you achieve?", text: $newWinText)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.inter(13))
+                    TextField("Artifact URL (optional)", text: $newWinArtifact)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.inter(11))
+                    HStack {
+                        Spacer()
+                        Button("Cancel") {
+                            showAddWin = false
+                            newWinText = ""
+                            newWinArtifact = ""
+                        }
+                        .font(.inter(11))
+                        .foregroundStyle(Theme.textMuted)
+                        Button("Save Win") {
+                            saveStandaloneWin()
+                        }
+                        .font(.inter(11, weight: .semibold))
+                        .buttonStyle(.borderedProminent)
+                        .tint(Theme.yellowDark)
+                        .controlSize(.small)
+                        .disabled(newWinText.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 12)
+            }
 
             if wins.isEmpty {
                 VStack(spacing: 12) {
@@ -51,6 +98,27 @@ struct WinsView: View {
             }
         }
         .onAppear { loadWins() }
+    }
+
+    private func saveStandaloneWin() {
+        let text = newWinText.trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty else { return }
+        let artifact = newWinArtifact.trimmingCharacters(in: .whitespaces)
+
+        // Create a completed action item to anchor the win
+        var item = Item.new(text: text, category: .action)
+        item.done = true
+        item.doneAt = Date()
+        try? Queries.addItem(item)
+
+        let win = Win.new(itemId: item.id, artifact: artifact.isEmpty ? nil : artifact, valueAdd: text)
+        try? Queries.addWin(win)
+
+        newWinText = ""
+        newWinArtifact = ""
+        showAddWin = false
+        appState.refreshCounts()
+        loadWins()
     }
 
     private func loadWins() {

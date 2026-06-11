@@ -7,9 +7,11 @@ struct DailyDumpView: View {
     @State private var content = ""
     @State private var isAnalyzing = false
     @State private var proposedItems: [ProposedItem] = []
+    @State private var suggestedTags: [AIService.SuggestedTag] = []
     @State private var expandedPastDays: Set<String> = []
     @State private var showGuide = false
     @State private var searchTag: String? = nil
+    @State private var isUpdating = false
 
     var body: some View {
         ScrollView {
@@ -21,7 +23,8 @@ struct DailyDumpView: View {
                 } else {
                     guideBar
                     todaySection
-                    if !proposedItems.isEmpty { reviewSection }
+                    if !suggestedTags.isEmpty { tagSuggestionsSection }
+                if !proposedItems.isEmpty { reviewSection }
                     if !pastDumps.isEmpty { pastSection }
                 }
             }
@@ -205,7 +208,7 @@ struct DailyDumpView: View {
             Text(result.dateDisplay)
                 .font(.inter(10, weight: .medium))
                 .foregroundStyle(Theme.textMuted)
-            Text(result.bulletText)
+            Text(stripTags(result.bulletText))
                 .font(.inter(13))
                 .foregroundStyle(Theme.textPrimary)
                 .textSelection(.enabled)
@@ -275,6 +278,81 @@ struct DailyDumpView: View {
 
     // MARK: - AI Review Section
 
+    // MARK: - Tag Suggestions
+
+    private var tagSuggestionsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "tag")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.purple)
+                Text("Suggested Tags")
+                    .font(.inter(12, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Button("Dismiss") {
+                    withAnimation { suggestedTags.removeAll() }
+                }
+                .font(.inter(10))
+                .foregroundStyle(Theme.textMuted)
+            }
+
+            ForEach(Array(suggestedTags.enumerated()), id: \.offset) { index, suggestion in
+                tagSuggestionRow(index: index, suggestion: suggestion)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func tagSuggestionRow(index: Int, suggestion: AIService.SuggestedTag) -> some View {
+        HStack(spacing: 8) {
+            Text(stripTags(suggestion.bulletText))
+                .font(.inter(11))
+                .foregroundStyle(Theme.textSecondary)
+                .lineLimit(1)
+            Spacer()
+            Text("#\(suggestion.tag)")
+                .font(.inter(10, weight: .bold))
+                .foregroundStyle(Theme.purple)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Theme.purple.opacity(0.1), in: Capsule())
+            Button {
+                applyTagSuggestion(index: index, suggestion: suggestion)
+            } label: {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(Theme.greenDark)
+            }
+            .buttonStyle(.plain)
+            Button {
+                _ = withAnimation { suggestedTags.remove(at: index) }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(Theme.textMuted)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(8)
+        .background(Theme.softGray.opacity(0.3), in: RoundedRectangle(cornerRadius: 6))
+    }
+
+    private func applyTagSuggestion(index: Int, suggestion: AIService.SuggestedTag) {
+        // Append the #tag to the matching bullet in content
+        let lines = content.components(separatedBy: "\n")
+        let updated = lines.map { line -> String in
+            let stripped = line.hasPrefix("• ") ? String(line.dropFirst(2)) : line
+            if stripped.trimmingCharacters(in: .whitespaces) == suggestion.bulletText.trimmingCharacters(in: .whitespaces) {
+                return line + " #\(suggestion.tag)"
+            }
+            return line
+        }
+        content = updated.joined(separator: "\n")
+        saveDraft()
+        _ = withAnimation { suggestedTags.remove(at: index) }
+    }
+
     private var reviewSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -298,7 +376,15 @@ struct DailyDumpView: View {
     @ViewBuilder
     private func proposedRow(index: Int, proposed: ProposedItem) -> some View {
         HStack(spacing: 10) {
-            CategoryBadge(category: proposed.category)
+            if proposed.isWin {
+                Image(systemName: "trophy.fill")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Theme.yellowDark)
+                    .frame(width: 24, height: 24)
+                    .background(Theme.yellowTint.opacity(0.5), in: RoundedRectangle(cornerRadius: Theme.radius(6)))
+            } else {
+                CategoryBadge(category: proposed.category)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(proposed.text)
                     .font(.inter(12))
@@ -425,6 +511,12 @@ struct DailyDumpView: View {
         return Array(Set(tags)).sorted()
     }
 
+    private func stripTags(_ text: String) -> String {
+        text.replacingOccurrences(of: #"#[\w\-]+"#, with: "", options: .regularExpression)
+            .replacingOccurrences(of: "  ", with: " ")
+            .trimmingCharacters(in: .whitespaces)
+    }
+
     private func collectAllTags() -> [String] {
         var allDumps = pastDumps
         if let today = todayDump { allDumps.insert(today, at: 0) }
@@ -457,14 +549,30 @@ struct DailyDumpView: View {
     }
 
     private func handleContentChange(_ newValue: String) {
-        // First character typed on empty content — prepend bullet
-        if !newValue.isEmpty && !newValue.hasPrefix("• ") && !newValue.contains("\n") {
-            content = "• " + newValue
-            return
+        guard !isUpdating else { return }
+
+        var updated = newValue
+
+        // Replace "* " or standalone "*" at line starts with "• "
+        updated = updated.replacingOccurrences(of: "\n* ", with: "\n• ")
+        updated = updated.replacingOccurrences(of: "\n*", with: "\n• ")
+        if updated.hasPrefix("* ") { updated = "• " + String(updated.dropFirst(2)) }
+        if updated == "*" { updated = "• " }
+
+        // First character on empty — ensure bullet prefix
+        if !updated.isEmpty && !updated.hasPrefix("• ") && !updated.contains("\n") {
+            updated = "• " + updated
         }
-        // Enter pressed — start new line with bullet
-        if newValue.hasSuffix("\n") {
-            content = newValue + "• "
+
+        // Enter pressed — new bullet on new line
+        if updated.hasSuffix("\n") {
+            updated += "• "
+        }
+
+        if updated != newValue {
+            isUpdating = true
+            content = updated
+            DispatchQueue.main.async { isUpdating = false }
         }
     }
 
@@ -484,9 +592,10 @@ struct DailyDumpView: View {
         isAnalyzing = true
         Task {
             do {
-                let items = try await AIService.analyzeDump(content: content)
+                let result = try await AIService.analyzeDump(content: content)
                 await MainActor.run {
-                    proposedItems = items
+                    proposedItems = result.proposedItems
+                    suggestedTags = result.suggestedTags
                     isAnalyzing = false
                 }
             } catch {
@@ -497,12 +606,27 @@ struct DailyDumpView: View {
 
     private func acceptItem(at index: Int) {
         let proposed = proposedItems[index]
-        var item = Item.new(text: proposed.text, category: proposed.category)
-        if !proposed.tags.isEmpty {
-            item.tags = try? String(data: JSONEncoder().encode(proposed.tags), encoding: .utf8)
+
+        // "win" category: create a completed action + log a win
+        if proposed.isWin {
+            var item = Item.new(text: proposed.text, category: .action)
+            item.done = true
+            item.doneAt = Date()
+            if !proposed.tags.isEmpty {
+                item.tags = try? String(data: JSONEncoder().encode(proposed.tags), encoding: .utf8)
+            }
+            try? Queries.addItem(item)
+            let win = Win.new(itemId: item.id, artifact: nil, valueAdd: proposed.text)
+            try? Queries.addWin(win)
+        } else {
+            var item = Item.new(text: proposed.text, category: proposed.category)
+            if !proposed.tags.isEmpty {
+                item.tags = try? String(data: JSONEncoder().encode(proposed.tags), encoding: .utf8)
+            }
+            try? Queries.addItem(item)
+            Task { _ = try? await AIService.classifyAndCluster(text: proposed.text, itemId: item.id, category: item.category) }
         }
-        try? Queries.addItem(item)
-        Task { _ = try? await AIService.classifyAndCluster(text: proposed.text, itemId: item.id, category: item.category) }
+
         appState.refreshCounts()
         _ = withAnimation { proposedItems.remove(at: index) }
     }
@@ -512,6 +636,7 @@ struct ProposedItem: Identifiable {
     let id = UUID()
     let text: String
     let category: Category
+    let isWin: Bool
     let tags: [String]
     let originalText: String
 }

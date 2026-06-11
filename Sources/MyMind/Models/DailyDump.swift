@@ -55,7 +55,9 @@ struct DumpBullet: Identifiable {
             .components(separatedBy: "\n")
             .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
             .map { line in
-                let cleaned = line.hasPrefix("• ") ? String(line.dropFirst(2)) : line
+                var cleaned = line
+                if cleaned.hasPrefix("• ") { cleaned = String(cleaned.dropFirst(2)) }
+                else if cleaned.hasPrefix("* ") { cleaned = String(cleaned.dropFirst(2)) }
                 let tags = extractTags(from: cleaned)
                 return DumpBullet(text: cleaned, tags: tags)
             }

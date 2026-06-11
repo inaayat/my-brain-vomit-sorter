@@ -168,41 +168,74 @@ struct AIService {
         return NoteSuggestionsResult(actions: actions, brainstorms: brainstorms)
     }
 
-    static func analyzeDump(content: String) async throws -> [ProposedItem] {
+    struct AnalyzeResult {
+        var proposedItems: [ProposedItem]
+        var suggestedTags: [SuggestedTag]
+    }
+
+    struct SuggestedTag {
+        let bulletText: String
+        let tag: String
+    }
+
+    static func analyzeDump(content: String) async throws -> AnalyzeResult {
         let system = """
-            You analyze a daily brain-dump (bullet-pointed thoughts) and extract discrete actionable items or brainstorm ideas.
+            You analyze a daily brain-dump (bullet-pointed thoughts). You do two things:
 
-            For each item you extract:
-            - text: a clean, concise version of the thought (imperative for actions, statement for brainstorms)
-            - category: "action" (concrete task to do) or "brainstorm" (idea, observation, question)
-            - tags: 1-3 short topic tags derived from the content (lowercase, use project/system names when applicable)
-            - original_text: the exact source bullet text you extracted this from
+            1. EXTRACT ITEMS: For each meaningful bullet, propose it as a MyMind item:
+            - text: a clean, concise version of the thought
+            - category: one of "action" (concrete task), "brainstorm" (idea/observation), "win" (achievement/accomplishment), or "resource" (URL/reference/article)
+            - tags: 1-3 short topic tags (lowercase, use exact project/system names like "workday", "accounting-center", "jira")
+            - original_text: the exact source bullet text
 
-            Respond with ONLY valid JSON array:
-            [{"text": "...", "category": "action", "tags": ["tag1"], "original_text": "..."}]
+            2. SUGGEST TAGS: For bullets that don't already have a #tag, suggest what tag should be appended. Look for exact recurring words, project names, meeting names, or topic areas across all bullets.
+
+            Respond with ONLY valid JSON:
+            {
+              "items": [{"text": "...", "category": "action", "tags": ["tag1"], "original_text": "..."}],
+              "suggested_tags": [{"bullet": "exact bullet text", "tag": "suggested-tag"}]
+            }
 
             Rules:
             - Don't create items from trivial/filler bullets
-            - Preserve #hashtags from the original as tags
-            - If a bullet is already clear and actionable, keep the text similar
-            - Return an empty array [] if nothing is worth extracting
+            - Preserve existing #hashtags as tags
+            - If a bullet already has a #tag, don't suggest a tag for it
+            - Tags should be specific and reusable (project names, meeting names, topics)
+            - Look for patterns: if multiple bullets mention the same project/topic, suggest that as a tag
+            - Return empty arrays if nothing applies
             """
 
-        let response = try await client.send(system: system, userMessage: content, maxTokens: 2000)
+        let response = try await client.send(system: system, userMessage: content, maxTokens: 3000)
         let cleaned = cleanJSON(response)
         guard let data = cleaned.data(using: .utf8),
-              let arr = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
-            return []
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return AnalyzeResult(proposedItems: [], suggestedTags: [])
         }
 
-        return arr.compactMap { obj in
-            guard let text = obj["text"] as? String,
-                  let categoryStr = obj["category"] as? String else { return nil }
-            let category: Category = categoryStr == "action" ? .action : .brainstorm
-            let tags = (obj["tags"] as? [String])?.map { $0.lowercased() } ?? []
-            let originalText = obj["original_text"] as? String ?? text
-            return ProposedItem(text: text, category: category, tags: tags, originalText: originalText)
+        let items: [ProposedItem] = ((obj["items"] as? [[String: Any]]) ?? []).compactMap { item in
+            guard let text = item["text"] as? String,
+                  let categoryStr = item["category"] as? String else { return nil }
+            let isWin = categoryStr == "win"
+            let category: Category
+            switch categoryStr {
+            case "action": category = .action
+            case "brainstorm": category = .brainstorm
+            case "resource": category = .resource
+            case "win": category = .action
+            default: category = .brainstorm
+            }
+            let tags = (item["tags"] as? [String])?.map { $0.lowercased() } ?? []
+            let originalText = item["original_text"] as? String ?? text
+            return ProposedItem(text: text, category: category, isWin: isWin, tags: tags, originalText: originalText)
         }
+
+        let suggestedTags: [SuggestedTag] = ((obj["suggested_tags"] as? [[String: Any]]) ?? []).compactMap { st in
+            guard let bullet = st["bullet"] as? String,
+                  let tag = st["tag"] as? String else { return nil }
+            return SuggestedTag(bulletText: bullet, tag: tag.lowercased())
+        }
+
+        return AnalyzeResult(proposedItems: items, suggestedTags: suggestedTags)
     }
 
     // MARK: - Helpers
