@@ -59,6 +59,8 @@ struct ContentView: View {
             WinsView(appState: appState)
         case .clusters:
             ClustersView(appState: appState)
+        case .dailyDump:
+            DailyDumpView(appState: appState)
         case .guide:
             GuideView()
         case .itemDetail:

@@ -168,6 +168,43 @@ struct AIService {
         return NoteSuggestionsResult(actions: actions, brainstorms: brainstorms)
     }
 
+    static func analyzeDump(content: String) async throws -> [ProposedItem] {
+        let system = """
+            You analyze a daily brain-dump (bullet-pointed thoughts) and extract discrete actionable items or brainstorm ideas.
+
+            For each item you extract:
+            - text: a clean, concise version of the thought (imperative for actions, statement for brainstorms)
+            - category: "action" (concrete task to do) or "brainstorm" (idea, observation, question)
+            - tags: 1-3 short topic tags derived from the content (lowercase, use project/system names when applicable)
+            - original_text: the exact source bullet text you extracted this from
+
+            Respond with ONLY valid JSON array:
+            [{"text": "...", "category": "action", "tags": ["tag1"], "original_text": "..."}]
+
+            Rules:
+            - Don't create items from trivial/filler bullets
+            - Preserve #hashtags from the original as tags
+            - If a bullet is already clear and actionable, keep the text similar
+            - Return an empty array [] if nothing is worth extracting
+            """
+
+        let response = try await client.send(system: system, userMessage: content, maxTokens: 2000)
+        let cleaned = cleanJSON(response)
+        guard let data = cleaned.data(using: .utf8),
+              let arr = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            return []
+        }
+
+        return arr.compactMap { obj in
+            guard let text = obj["text"] as? String,
+                  let categoryStr = obj["category"] as? String else { return nil }
+            let category: Category = categoryStr == "action" ? .action : .brainstorm
+            let tags = (obj["tags"] as? [String])?.map { $0.lowercased() } ?? []
+            let originalText = obj["original_text"] as? String ?? text
+            return ProposedItem(text: text, category: category, tags: tags, originalText: originalText)
+        }
+    }
+
     // MARK: - Helpers
 
     private static func parseJSON(_ raw: String) throws -> [String: Any] {

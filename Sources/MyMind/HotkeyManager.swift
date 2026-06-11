@@ -6,6 +6,7 @@ final class HotkeyManager {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     var onHotkey: (() -> Void)?
+    var onNotepadHotkey: (() -> Void)?
 
     func register() {
         let mask: CGEventMask = 1 << CGEventType.keyDown.rawValue
@@ -28,6 +29,14 @@ final class HotkeyManager {
                 if keyCode == 46 && hasCtrlOpt && noExtraModifiers {
                     DispatchQueue.main.async {
                         HotkeyManager.shared.onHotkey?()
+                    }
+                    return nil
+                }
+
+                // N key = keycode 45, Ctrl+Option — notepad
+                if keyCode == 45 && hasCtrlOpt && noExtraModifiers {
+                    DispatchQueue.main.async {
+                        HotkeyManager.shared.onNotepadHotkey?()
                     }
                     return nil
                 }

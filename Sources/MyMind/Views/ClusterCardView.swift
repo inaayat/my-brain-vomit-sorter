@@ -138,6 +138,7 @@ struct ClusterCardView: View {
                 .lineLimit(2)
                 .strikethrough(item.done)
                 .multilineTextAlignment(.leading)
+            dueDateBadge(for: item)
             Spacer()
             PriorityPicker(item: item, onChange: { onChanged?() })
             Button {
@@ -174,6 +175,32 @@ struct ClusterCardView: View {
         .contentShape(RoundedRectangle(cornerRadius: Theme.radius(8)))
         .onTapGesture {
             onItemTap?(item.id)
+        }
+    }
+
+    @ViewBuilder
+    private func dueDateBadge(for item: Item) -> some View {
+        if let dueDate = item.dueDate, !item.done {
+            let label: String = {
+                if item.isOverdue {
+                    let days = Calendar.current.dateComponents([.day], from: dueDate, to: Date()).day ?? 0
+                    return days == 1 ? "1d overdue" : "\(days)d overdue"
+                } else if item.isDueToday { return "Due today" }
+                else if item.isDueSoon { return "Due tomorrow" }
+                else { return "Due \(dueDate.formatted(.dateTime.month(.abbreviated).day()))" }
+            }()
+            let color: Color = {
+                if item.isOverdue { return Color(hex: "#D32F2F") }
+                if item.isDueToday { return Color(hex: "#E65100") }
+                if item.isDueSoon { return Color(hex: "#F57C00") }
+                return Theme.textMuted
+            }()
+            Text(label)
+                .font(.inter(9, weight: .bold))
+                .foregroundStyle(color)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(color.opacity(0.12), in: Capsule())
         }
     }
 

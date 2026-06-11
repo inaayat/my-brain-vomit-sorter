@@ -21,6 +21,7 @@ struct Sidebar: View {
 
             VStack(spacing: 16) {
                 iconButton(.overview, icon: "square.grid.2x2", tooltip: "Feed")
+                iconButton(.dailyDump, icon: "list.bullet.rectangle.portrait", tooltip: "Daily Dump")
                 iconButton(.clusters, icon: "rectangle.3.group", tooltip: "Clusters")
                 iconButton(.completed, icon: "checkmark.circle", tooltip: "Completed")
                 iconButton(.wins, icon: "trophy.fill", tooltip: "Wins")

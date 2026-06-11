@@ -318,4 +318,50 @@ struct Queries {
     static func getWinCount() throws -> Int {
         try db.read { db in try Win.fetchCount(db) }
     }
+
+    // MARK: - Daily Dumps
+
+    static func getDump(date: String) throws -> DailyDump? {
+        try db.read { db in
+            try DailyDump.filter(DailyDump.Columns.date == date).fetchOne(db)
+        }
+    }
+
+    static func getOrCreateTodayDump() throws -> DailyDump {
+        let today = DailyDump.today()
+        if let existing = try getDump(date: today) { return existing }
+        let dump = DailyDump.new(date: today)
+        try db.write { db in try dump.insert(db) }
+        return dump
+    }
+
+    static func updateDumpContent(id: String, content: String) throws {
+        try db.write { db in
+            try db.execute(
+                sql: "UPDATE daily_dumps SET content = ?, updatedAt = ? WHERE id = ?",
+                arguments: [content, Date(), id]
+            )
+        }
+    }
+
+    static func appendToDump(date: String, bullet: String) throws {
+        let dump = try getOrCreateTodayDump()
+        let newContent = dump.content.isEmpty ? "• \(bullet)" : "\(dump.content)\n• \(bullet)"
+        try updateDumpContent(id: dump.id, content: newContent)
+    }
+
+    static func getAllDumps() throws -> [DailyDump] {
+        try db.read { db in
+            try DailyDump.order(DailyDump.Columns.date.desc).fetchAll(db)
+        }
+    }
+
+    static func toggleDumpLock(id: String) throws {
+        try db.write { db in
+            try db.execute(
+                sql: "UPDATE daily_dumps SET locked = NOT locked, updatedAt = ? WHERE id = ?",
+                arguments: [Date(), id]
+            )
+        }
+    }
 }

@@ -18,6 +18,7 @@ struct InlineCaptureView: View {
     @State private var selectedResourceId: String?
     @State private var allClusters: [Cluster] = []
     @State private var allResources: [Item] = []
+    @State private var showDatePopover = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -81,14 +82,11 @@ struct InlineCaptureView: View {
                     }
 
                     HStack(spacing: 12) {
-                        Toggle("Due", isOn: $hasDueDate)
+                        DatePicker("Due", selection: $dueDate, displayedComponents: .date)
+                            .labelsHidden()
                             .controlSize(.small)
-                            .fixedSize()
-                        if hasDueDate {
-                            DatePicker("", selection: $dueDate, displayedComponents: .date)
-                                .labelsHidden()
-                                .controlSize(.small)
-                        }
+                            .frame(maxWidth: 130)
+                            .onChange(of: dueDate) { _, _ in hasDueDate = true }
 
                         TextField("URL (optional)", text: $urlText)
                             .textFieldStyle(.roundedBorder)

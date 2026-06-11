@@ -90,6 +90,18 @@ final class DatabaseManager: Sendable {
             }
         }
 
+        migrator.registerMigration("v5-dailydumps") { db in
+            try db.create(table: "daily_dumps") { t in
+                t.column("id", .text).primaryKey()
+                t.column("date", .text).notNull().unique()
+                t.column("content", .text).notNull().defaults(to: "")
+                t.column("locked", .boolean).notNull().defaults(to: false)
+                t.column("createdAt", .datetime).notNull()
+                t.column("updatedAt", .datetime).notNull()
+            }
+            try db.create(index: "idx_dumps_date", on: "daily_dumps", columns: ["date"])
+        }
+
         return migrator
     }
 }

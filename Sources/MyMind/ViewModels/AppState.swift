@@ -6,6 +6,7 @@ enum NavigationDestination: Hashable {
     case completed
     case wins
     case clusters
+    case dailyDump
     case guide
     case itemDetail(String)
 }
