@@ -26,20 +26,20 @@ struct Sidebar: View {
                 iconButton(.clusters, icon: "rectangle.3.group", tooltip: "Clusters")
                 iconButton(.completed, icon: "checkmark.circle", tooltip: "Completed")
                 iconButton(.wins, icon: "trophy.fill", tooltip: "Wins")
-
-                Button { exportData() } label: {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(Theme.sidebarMuted)
-                        .frame(width: 38, height: 38)
-                }
-                .buttonStyle(.plain)
-                .help("Export Data")
-
                 iconButton(.masterDocs, icon: "doc.text.fill", tooltip: "Master Docs")
             }
 
             Spacer()
+
+            Button { exportData() } label: {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(Theme.sidebarMuted)
+                    .frame(width: 38, height: 38)
+            }
+            .buttonStyle(.plain)
+            .help("Export Data")
+            .padding(.bottom, 8)
 
             VStack(spacing: 6) {
                 Text(appState.broMode ? "girls just\nwanna\nhave fun" : "bro\nmode")
