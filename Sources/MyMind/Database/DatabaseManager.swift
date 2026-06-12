@@ -114,6 +114,18 @@ final class DatabaseManager: Sendable {
             try db.create(index: "idx_masterdocs_tag", on: "master_docs", columns: ["tag"])
         }
 
+        migrator.registerMigration("v7-subtags") { db in
+            try db.create(table: "tag_relationships") { t in
+                t.column("id", .text).primaryKey()
+                t.column("parentTag", .text).notNull()
+                t.column("childTag", .text).notNull()
+                t.column("createdAt", .datetime).notNull()
+                t.uniqueKey(["parentTag", "childTag"])
+            }
+            try db.create(index: "idx_tagrel_parent", on: "tag_relationships", columns: ["parentTag"])
+            try db.create(index: "idx_tagrel_child", on: "tag_relationships", columns: ["childTag"])
+        }
+
         return migrator
     }
 }

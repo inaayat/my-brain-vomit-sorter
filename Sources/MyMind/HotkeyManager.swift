@@ -22,11 +22,11 @@ final class HotkeyManager {
                 let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
                 let flags = event.flags
 
-                // M key = keycode 46, Ctrl+Option modifiers
+                // A key = keycode 0, Ctrl+Option modifiers
                 let hasCtrlOpt = flags.contains(.maskControl) && flags.contains(.maskAlternate)
                 let noExtraModifiers = !flags.contains(.maskShift) && !flags.contains(.maskCommand)
 
-                if keyCode == 46 && hasCtrlOpt && noExtraModifiers {
+                if keyCode == 0 && hasCtrlOpt && noExtraModifiers {
                     DispatchQueue.main.async {
                         HotkeyManager.shared.onHotkey?()
                     }

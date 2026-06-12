@@ -238,6 +238,30 @@ struct AIService {
         return AnalyzeResult(proposedItems: items, suggestedTags: suggestedTags)
     }
 
+    // MARK: - Master Doc Insert (drag-and-drop with AI sort)
+
+    static func insertBulletsIntoDoc(existingContent: String, bullets: [String]) async throws -> String {
+        let system = """
+            You integrate new notes into an existing document. For each new bullet:
+            1. Find the most relevant existing heading/section to place it under
+            2. Expand the bullet into a full insight — use complete sentences, connect it to other content in that section, add brief context
+            3. If no existing heading fits, create a new section heading (## Title)
+            4. Prefix each newly inserted line with "→ " so the user can see what was added
+
+            Rules:
+            - Preserve ALL existing content exactly as-is
+            - Only ADD new content, never modify or remove existing lines
+            - Place new content logically within the section (not always at the end)
+            - Use professional, clear language
+            - Return ONLY the full updated document (no explanation, no preamble)
+            """
+        var userMessage = "EXISTING DOCUMENT:\n"
+        userMessage += existingContent.isEmpty ? "(empty document)" : existingContent
+        userMessage += "\n\nNEW BULLETS TO INSERT:\n"
+        userMessage += bullets.map { "• \($0)" }.joined(separator: "\n")
+        return try await client.send(system: system, userMessage: userMessage, maxTokens: 4000)
+    }
+
     // MARK: - Master Doc Synthesis
 
     static func synthesizeMasterDoc(existingContent: String, bullets: String) async throws -> String {

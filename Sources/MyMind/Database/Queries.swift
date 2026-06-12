@@ -421,4 +421,45 @@ struct Queries {
             _ = try MasterDoc.filter(MasterDoc.Columns.id == id).deleteAll(db)
         }
     }
+
+    // MARK: - Tag Relationships
+
+    static func addSubTag(parentTag: String, childTag: String) throws {
+        try db.write { db in
+            let rel = TagRelationship(id: UUID().uuidString, parentTag: parentTag, childTag: childTag, createdAt: Date())
+            try rel.insert(db)
+        }
+    }
+
+    static func removeSubTag(parentTag: String, childTag: String) throws {
+        try db.write { db in
+            _ = try TagRelationship
+                .filter(TagRelationship.Columns.parentTag == parentTag && TagRelationship.Columns.childTag == childTag)
+                .deleteAll(db)
+        }
+    }
+
+    static func getSubTags(parentTag: String) throws -> [String] {
+        try db.read { db in
+            let rows = try TagRelationship
+                .filter(TagRelationship.Columns.parentTag == parentTag)
+                .fetchAll(db)
+            return rows.map(\.childTag)
+        }
+    }
+
+    static func getParentTag(childTag: String) throws -> String? {
+        try db.read { db in
+            try TagRelationship
+                .filter(TagRelationship.Columns.childTag == childTag)
+                .fetchOne(db)?
+                .parentTag
+        }
+    }
+
+    static func getAllTagRelationships() throws -> [TagRelationship] {
+        try db.read { db in
+            try TagRelationship.fetchAll(db)
+        }
+    }
 }

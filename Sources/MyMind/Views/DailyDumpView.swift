@@ -21,6 +21,12 @@ struct DailyDumpView: View {
     @State private var reviewClusters: [Cluster] = []
     @State private var showMasterDocPanel = false
     @State private var isUpdating = false
+    @State private var showTagDropAction = false
+    @State private var tagDropSource: String? = nil
+    @State private var tagDropTarget: String? = nil
+    @State private var includeSubTags = false
+    @State private var selectedBulletIds: Set<UUID> = []
+    @State private var docRefreshToken = 0
 
     var body: some View {
         HStack(spacing: 0) {
@@ -30,6 +36,7 @@ struct DailyDumpView: View {
                     tagBar
                     if let tag = searchTag {
                         tagSearchResults(tag: tag)
+                            .id(docRefreshToken)
                     } else {
                         guideBar
                         todaySection
@@ -46,6 +53,8 @@ struct DailyDumpView: View {
                 Divider()
                 MasterDocPanelView(appState: appState, tag: tag, onClose: {
                     withAnimation { showMasterDocPanel = false }
+                }, onDocUpdated: {
+                    docRefreshToken += 1
                 })
                 .frame(maxWidth: .infinity)
             }
@@ -198,7 +207,7 @@ struct DailyDumpView: View {
                     }
 
                     if allTags.count > 8 {
-                        Text("Drag a tag onto another to merge them")
+                        Text("Drag a tag onto another to merge or make sub-tag")
                             .font(.inter(9))
                             .foregroundStyle(Theme.textMuted)
                     }
@@ -209,6 +218,31 @@ struct DailyDumpView: View {
                 } message: {
                     if let src = mergeSource, let tgt = mergeTarget {
                         Text("Replace all #\(src) with #\(tgt)? This updates every bullet across all days.")
+                    }
+                }
+                .confirmationDialog(
+                    tagDropSource.map { "What do you want to do with #\($0)?" } ?? "",
+                    isPresented: $showTagDropAction,
+                    titleVisibility: .visible
+                ) {
+                    if let src = tagDropSource, let tgt = tagDropTarget {
+                        Button("Merge into #\(tgt)") {
+                            mergeSource = src
+                            mergeTarget = tgt
+                            showMergeConfirm = true
+                            tagDropSource = nil; tagDropTarget = nil
+                        }
+                        Button("Make #\(src) a sub-tag of #\(tgt)") {
+                            try? Queries.addSubTag(parentTag: tgt, childTag: src)
+                            tagDropSource = nil; tagDropTarget = nil
+                        }
+                        Button("Cancel", role: .cancel) {
+                            tagDropSource = nil; tagDropTarget = nil
+                        }
+                    }
+                } message: {
+                    if let src = tagDropSource, let tgt = tagDropTarget {
+                        Text("You dragged #\(src) onto #\(tgt)")
                     }
                 }
             }
@@ -281,16 +315,9 @@ struct DailyDumpView: View {
             .draggable(tag)
             .dropDestination(for: String.self) { dropped, _ in
                 guard let source = dropped.first, source != tag else { return false }
-                let srcCount = tagCount(source)
-                let tgtCount = tagCount(tag)
-                if srcCount > tgtCount {
-                    mergeSource = tag
-                    mergeTarget = source
-                } else {
-                    mergeSource = source
-                    mergeTarget = tag
-                }
-                showMergeConfirm = true
+                tagDropSource = source
+                tagDropTarget = tag
+                showTagDropAction = true
                 return true
             } isTargeted: { targeted in
                 mergeTarget = targeted ? tag : nil
@@ -300,7 +327,10 @@ struct DailyDumpView: View {
 
     @ViewBuilder
     private func tagSearchResults(tag: String) -> some View {
-        let allResults = findBulletsByTag(tag, includeRetired: true)
+        let subTags = (try? Queries.getSubTags(parentTag: tag)) ?? []
+        let baseResults = findBulletsByTag(tag, includeRetired: true)
+        let subResults: [TagSearchResult] = includeSubTags ? subTags.flatMap { findBulletsByTag($0, includeRetired: true) } : []
+        let allResults = baseResults + subResults
         let visibleResults = showRetired ? allResults : allResults.filter { !$0.isRetired }
         let retiredCount = allResults.filter(\.isRetired).count
         VStack(alignment: .leading, spacing: 12) {
@@ -311,7 +341,7 @@ struct DailyDumpView: View {
                 Text(tag)
                     .font(.inter(16, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
-                Text("\(allResults.count - retiredCount) bullets")
+                Text("\(visibleResults.count) bullets")
                     .font(.inter(11))
                     .foregroundStyle(Theme.textMuted)
                 Spacer()
@@ -330,6 +360,24 @@ struct DailyDumpView: View {
                     .background(Theme.purple.opacity(0.1), in: Capsule())
                 }
                 .buttonStyle(.plain)
+
+                if !subTags.isEmpty {
+                    Button {
+                        withAnimation { includeSubTags.toggle() }
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: includeSubTags ? "arrow.down.right.circle.fill" : "arrow.down.right.circle")
+                                .font(.system(size: 9))
+                            Text(includeSubTags ? "Hide sub-tags" : "Include sub-tags")
+                                .font(.inter(9, weight: .medium))
+                        }
+                        .foregroundStyle(includeSubTags ? Theme.purple : Theme.textMuted)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background((includeSubTags ? Theme.purple : Theme.softGray).opacity(includeSubTags ? 0.1 : 0.5), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
 
                 if retiredCount > 0 {
                     Button {
@@ -350,34 +398,94 @@ struct DailyDumpView: View {
                 }
             }
 
+            // Sub-tag pills
+            if !subTags.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        Text("Sub-tags:")
+                            .font(.inter(10))
+                            .foregroundStyle(Theme.textMuted)
+                        ForEach(subTags, id: \.self) { sub in
+                            Button {
+                                withAnimation { searchTag = sub }
+                            } label: {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "number")
+                                        .font(.system(size: 7, weight: .bold))
+                                    Text(sub)
+                                        .font(.inter(9, weight: .semibold))
+                                }
+                                .foregroundStyle(Theme.purple.opacity(0.8))
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(Theme.purple.opacity(0.08), in: Capsule())
+                                .overlay(Capsule().strokeBorder(Theme.purple.opacity(0.3), lineWidth: 1))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+
             if visibleResults.isEmpty {
                 Text("No bullets found with this tag.")
                     .font(.inter(13))
                     .foregroundStyle(Theme.textMuted)
                     .padding(.top, 20)
             } else {
-                ForEach(visibleResults, id: \.id) { result in
-                    tagResultRow(result)
+                let docContent = (try? Queries.getMasterDoc(tag: tag))?.content ?? ""
+                let sorted = visibleResults.sorted { a, b in
+                    let aInDoc = bulletIsInDoc(a.bulletText, docContent: docContent)
+                    let bInDoc = bulletIsInDoc(b.bulletText, docContent: docContent)
+                    if aInDoc != bInDoc { return !aInDoc }
+                    return false
+                }
+                ForEach(sorted, id: \.id) { result in
+                    tagResultRow(result, isInDoc: bulletIsInDoc(result.bulletText, docContent: docContent))
                 }
             }
         }
     }
 
     @ViewBuilder
-    private func tagResultRow(_ result: TagSearchResult) -> some View {
+    private func tagResultRow(_ result: TagSearchResult, isInDoc: Bool = false) -> some View {
+        let isSelected = selectedBulletIds.contains(result.id)
         HStack(spacing: 8) {
+            if isInDoc {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Theme.greenDark.opacity(0.6))
+            } else {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 14))
+                    .foregroundStyle(isSelected ? Theme.purple : Theme.textMuted.opacity(0.3))
+                    .onTapGesture {
+                        if isSelected { selectedBulletIds.remove(result.id) }
+                        else { selectedBulletIds.insert(result.id) }
+                    }
+            }
             VStack(alignment: .leading, spacing: 4) {
-                Text(result.dateDisplay)
-                    .font(.inter(10, weight: .medium))
-                    .foregroundStyle(Theme.textMuted)
+                HStack(spacing: 6) {
+                    Text(result.dateDisplay)
+                        .font(.inter(10, weight: .medium))
+                        .foregroundStyle(Theme.textMuted)
+                    if isInDoc {
+                        Text("in doc")
+                            .font(.inter(8, weight: .bold))
+                            .foregroundStyle(Theme.greenDark)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Theme.greenDark.opacity(0.1), in: Capsule())
+                    }
+                }
                 Text(stripTags(result.bulletText))
                     .font(.inter(13))
-                    .foregroundStyle(result.isRetired ? Theme.textMuted : Theme.textPrimary)
+                    .foregroundStyle(isInDoc ? Theme.textMuted : (result.isRetired ? Theme.textMuted : Theme.textPrimary))
                     .strikethrough(result.isRetired)
                     .textSelection(.enabled)
             }
             Spacer()
-            if showMasterDocPanel, let tag = searchTag {
+            if !isInDoc, showMasterDocPanel, let tag = searchTag {
                 Button {
                     appendBulletToMasterDoc(text: result.bulletText, tag: tag)
                 } label: {
@@ -386,7 +494,7 @@ struct DailyDumpView: View {
                         .foregroundStyle(Theme.purple)
                 }
                 .buttonStyle(.plain)
-                .help("Add to Master Doc")
+                .help("Append as bullet (drag into doc for AI sort)")
             }
             Button {
                 toggleRetire(result: result)
@@ -400,8 +508,19 @@ struct DailyDumpView: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(result.isRetired ? Theme.softGray.opacity(0.3) : Theme.cardBg, in: RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.border, lineWidth: 1))
+        .background(
+            isInDoc ? Theme.greenDark.opacity(0.04) : (isSelected ? Theme.purple.opacity(0.06) : (result.isRetired ? Theme.softGray.opacity(0.3) : Theme.cardBg)),
+            in: RoundedRectangle(cornerRadius: 8)
+        )
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(isInDoc ? Theme.greenDark.opacity(0.2) : (isSelected ? Theme.purple.opacity(0.5) : Theme.border), lineWidth: 1))
+        .draggable(result.bulletText)
+    }
+
+    private func bulletIsInDoc(_ bulletText: String, docContent: String) -> Bool {
+        guard !docContent.isEmpty else { return false }
+        let stripped = stripTags(bulletText).trimmingCharacters(in: .whitespaces)
+        guard stripped.count > 5 else { return false }
+        return docContent.localizedCaseInsensitiveContains(stripped)
     }
 
     // MARK: - Today's editor
@@ -422,7 +541,7 @@ struct DailyDumpView: View {
                 TextEditor(text: $content)
                     .font(.inter(13))
                     .scrollContentBackground(.hidden)
-                    .frame(minHeight: 200, maxHeight: 400)
+                    .frame(minHeight: 300)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(12)
                     .background(Theme.cardBg, in: RoundedRectangle(cornerRadius: 10))
@@ -954,6 +1073,7 @@ struct DailyDumpView: View {
         let bullet = "• \(stripTags(text))"
         let newContent = currentContent.isEmpty ? bullet : currentContent + "\n" + bullet
         try? Queries.upsertMasterDoc(tag: tag, content: newContent, title: title)
+        docRefreshToken += 1
     }
 
     private func analyzePastDump(_ dump: DailyDump) {

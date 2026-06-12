@@ -491,12 +491,19 @@ struct MasterDocPanelView: View {
     @Bindable var appState: AppState
     let tag: String
     var onClose: () -> Void
+    var onDocUpdated: (() -> Void)? = nil
     @State private var doc: MasterDoc?
     @State private var content = ""
     @State private var title = ""
     @State private var isSynthesizing = false
+    @State private var isInserting = false
     @State private var synthesizedPreview: String?
     @State private var fontSize: CGFloat = 13
+    @State private var highlightInsertions = false
+    @State private var showEmptyDocPrompt = false
+    @State private var pendingBullets: [String] = []
+    @State private var showSubTagSettings = false
+    @State private var isDragOver = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -504,18 +511,112 @@ struct MasterDocPanelView: View {
             Divider()
             panelToolbar
             Divider()
+            if isInserting {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text("AI is placing bullets into the doc...")
+                        .font(.inter(11))
+                        .foregroundStyle(Theme.textMuted)
+                }
+                .padding(12)
+                Divider()
+            }
             if let preview = synthesizedPreview {
                 synthesizePreview(preview)
                 Divider()
             }
-            TextEditor(text: $content)
-                .font(.inter(fontSize))
-                .scrollContentBackground(.hidden)
-                .padding(12)
-                .onChange(of: content) { saveDoc() }
+            ZStack {
+                TextEditor(text: $content)
+                    .font(.inter(fontSize))
+                    .scrollContentBackground(.hidden)
+                    .padding(12)
+                    .onChange(of: content) { saveDoc() }
+                    .opacity(highlightInsertions ? 0.9 : 1.0)
+                    .allowsHitTesting(!isDragOver)
+
+                if isDragOver {
+                    VStack(spacing: 10) {
+                        Image(systemName: "arrow.down.doc.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(Theme.purple)
+                        Text("Drop to AI-sort into doc")
+                            .font(.inter(13, weight: .semibold))
+                            .foregroundStyle(Theme.purple)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Theme.purple.opacity(0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(Theme.purple, style: StrokeStyle(lineWidth: 2, dash: [8]))
+                            .padding(8)
+                    )
+                }
+            }
+            .dropDestination(for: String.self) { dropped, _ in
+                isDragOver = false
+                let bullets = dropped.flatMap { $0.components(separatedBy: "\n") }.filter { !$0.isEmpty }
+                guard !bullets.isEmpty else { return false }
+                handleDroppedBullets(bullets)
+                return true
+            } isTargeted: { targeted in
+                isDragOver = targeted
+            }
         }
         .background(Theme.bg)
         .onAppear { loadDoc() }
+        .alert("Empty Document", isPresented: $showEmptyDocPrompt) {
+            Button("Create Sections") {
+                aiInsertBullets(pendingBullets, createStructure: true)
+            }
+            Button("Just Append") {
+                let joined = pendingBullets.map { "• \($0)" }.joined(separator: "\n")
+                content = joined
+                saveDoc()
+                onDocUpdated?()
+                pendingBullets = []
+            }
+            Button("Cancel", role: .cancel) { pendingBullets = [] }
+        } message: {
+            Text("This doc has no content yet. Should AI create sections from these bullets, or just append them as a list?")
+        }
+        .sheet(isPresented: $showSubTagSettings) {
+            subTagSettingsSheet
+        }
+    }
+
+    private func handleDroppedBullets(_ bullets: [String]) {
+        if content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            pendingBullets = bullets
+            showEmptyDocPrompt = true
+        } else {
+            aiInsertBullets(bullets, createStructure: false)
+        }
+    }
+
+    private func aiInsertBullets(_ bullets: [String], createStructure: Bool) {
+        isInserting = true
+        let existing = createStructure ? "" : content
+        Task {
+            do {
+                let result = try await AIService.insertBulletsIntoDoc(existingContent: existing, bullets: bullets)
+                await MainActor.run {
+                    content = result
+                    saveDoc()
+                    isInserting = false
+                    highlightInsertions = true
+                    onDocUpdated?()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        highlightInsertions = false
+                    }
+                    pendingBullets = []
+                }
+            } catch {
+                await MainActor.run {
+                    isInserting = false
+                    pendingBullets = []
+                }
+            }
+        }
     }
 
     private var panelHeader: some View {
@@ -530,6 +631,17 @@ struct MasterDocPanelView: View {
                     .foregroundStyle(Theme.purple)
             }
             Spacer()
+
+            Button {
+                showSubTagSettings = true
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textMuted)
+            }
+            .buttonStyle(.plain)
+            .help("Sub-tag settings")
+
             Button {
                 synthesize()
             } label: {
@@ -666,6 +778,101 @@ struct MasterDocPanelView: View {
                 }
             } catch {
                 await MainActor.run { isSynthesizing = false }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var subTagSettingsSheet: some View {
+        let subTags = (try? Queries.getSubTags(parentTag: tag)) ?? []
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Sub-tag Settings")
+                .font(.inter(16, weight: .bold))
+                .foregroundStyle(Theme.textPrimary)
+
+            Text("Sub-tags of #\(tag)")
+                .font(.inter(12))
+                .foregroundStyle(Theme.textMuted)
+
+            if subTags.isEmpty {
+                Text("No sub-tags yet. Drag a tag onto this one with Option held in the Daily Dump tag bar, or add one below.")
+                    .font(.inter(11))
+                    .foregroundStyle(Theme.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                VStack(spacing: 6) {
+                    ForEach(subTags, id: \.self) { sub in
+                        HStack {
+                            Image(systemName: "number")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(Theme.purple)
+                            Text(sub)
+                                .font(.inter(12, weight: .medium))
+                                .foregroundStyle(Theme.textPrimary)
+                            Spacer()
+                            Button {
+                                try? Queries.removeSubTag(parentTag: tag, childTag: sub)
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(Theme.textMuted)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Theme.purple.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                    }
+                }
+            }
+
+            Divider()
+
+            SubTagAdder(parentTag: tag)
+
+            Spacer()
+
+            HStack {
+                Spacer()
+                Button("Done") { showSubTagSettings = false }
+                    .font(.inter(12, weight: .semibold))
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.purple)
+            }
+        }
+        .padding(24)
+        .frame(width: 340, height: 380)
+    }
+}
+
+struct SubTagAdder: View {
+    let parentTag: String
+    @State private var newSubTag = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Add sub-tag")
+                .font(.inter(11, weight: .semibold))
+                .foregroundStyle(Theme.textMuted)
+            HStack(spacing: 8) {
+                TextField("Tag name", text: $newSubTag)
+                    .font(.inter(12))
+                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 160)
+                Button("Add") {
+                    let cleaned = newSubTag.lowercased()
+                        .trimmingCharacters(in: .whitespaces)
+                        .replacingOccurrences(of: " ", with: "-")
+                        .replacingOccurrences(of: "#", with: "")
+                    guard !cleaned.isEmpty else { return }
+                    try? Queries.addSubTag(parentTag: parentTag, childTag: cleaned)
+                    newSubTag = ""
+                }
+                .font(.inter(11, weight: .semibold))
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.purple)
+                .controlSize(.small)
+                .disabled(newSubTag.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
     }
