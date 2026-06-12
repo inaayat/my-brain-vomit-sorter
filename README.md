@@ -96,9 +96,11 @@ The app connects to Ollama at `localhost:11434`. If Ollama isn't running, AI fea
 - **Tag click**: Single-click a tag pill to see all bullets with that tag across all days
 - **Retire/archive**: Archive icon on each bullet in tag search hides it without deleting. "Show retired" toggle reveals them.
 - **AI Analyze**: Parses your dump into proposed actions, brainstorms, wins, or resources — review and accept individually
+- **Analyze past days**: Expand any past day and click "Analyze with AI" to extract items from older dumps
 - **Proposed item controls**: Tap category pill to cycle type (Action/Brainstorm/Resource/Win), pick cluster from dropdown, all before accepting
 - **AI clarity rewrite**: Proposed items are rewritten for clarity — full sentences, no filler words or shorthand
-- **Master Doc link**: Click "Master Doc" in tag search header to open/create the topic doc for that tag
+- **Master Doc link**: Click "Master Doc" in tag search header to open the side panel editor for that tag's doc
+- **Add bullet to doc**: When Master Doc panel is open, purple + icon on each bullet appends it directly to the doc
 - **AI Tag Suggestions**: Analyze also suggests `#tags` for untagged bullets based on patterns — accept with one click
 
 ### Master Docs

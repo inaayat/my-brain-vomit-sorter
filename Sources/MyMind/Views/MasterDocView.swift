@@ -288,7 +288,7 @@ struct MasterDocView: View {
                 insertMarkdown(prefix: "*", suffix: "*")
             }
             formatButton(icon: "list.bullet", tooltip: "Bullet list") {
-                insertAtLineStart("- ")
+                insertAtLineStart("• ")
             }
             formatButton(icon: "list.number", tooltip: "Numbered list") {
                 insertAtLineStart("1. ")
@@ -474,6 +474,192 @@ struct MasterDocView: View {
         Task {
             do {
                 let result = try await AIService.synthesizeMasterDoc(existingContent: content, bullets: bulletTexts)
+                await MainActor.run {
+                    synthesizedPreview = result
+                    isSynthesizing = false
+                }
+            } catch {
+                await MainActor.run { isSynthesizing = false }
+            }
+        }
+    }
+}
+
+// MARK: - Side Panel variant (used from DailyDumpView tag search)
+
+struct MasterDocPanelView: View {
+    @Bindable var appState: AppState
+    let tag: String
+    var onClose: () -> Void
+    @State private var doc: MasterDoc?
+    @State private var content = ""
+    @State private var title = ""
+    @State private var isSynthesizing = false
+    @State private var synthesizedPreview: String?
+    @State private var fontSize: CGFloat = 13
+
+    var body: some View {
+        VStack(spacing: 0) {
+            panelHeader
+            Divider()
+            panelToolbar
+            Divider()
+            if let preview = synthesizedPreview {
+                synthesizePreview(preview)
+                Divider()
+            }
+            TextEditor(text: $content)
+                .font(.inter(fontSize))
+                .scrollContentBackground(.hidden)
+                .padding(12)
+                .onChange(of: content) { saveDoc() }
+        }
+        .background(Theme.bg)
+        .onAppear { loadDoc() }
+    }
+
+    private var panelHeader: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                TextField("Title", text: $title)
+                    .font(.inter(16, weight: .bold))
+                    .textFieldStyle(.plain)
+                    .onSubmit { saveDoc() }
+                Text("#\(tag)")
+                    .font(.inter(10, weight: .semibold))
+                    .foregroundStyle(Theme.purple)
+            }
+            Spacer()
+            Button {
+                synthesize()
+            } label: {
+                HStack(spacing: 3) {
+                    Image(systemName: "sparkles")
+                    Text(isSynthesizing ? "..." : "Synthesize")
+                }
+                .font(.inter(10, weight: .semibold))
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.purple)
+            .controlSize(.small)
+            .disabled(isSynthesizing || content.isEmpty)
+
+            Button(action: onClose) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(Theme.textMuted.opacity(0.5))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Theme.card)
+    }
+
+    private var panelToolbar: some View {
+        HStack(spacing: 2) {
+            toolbarBtn(icon: "bold") { content += "**text**" }
+            toolbarBtn(icon: "italic") { content += "*text*" }
+            toolbarBtn(icon: "list.bullet") { insertLine("• ") }
+            toolbarBtn(icon: "number") { insertLine("## ") }
+            Divider().frame(height: 14).padding(.horizontal, 4)
+            toolbarBtn(icon: "textformat.size.smaller") { if fontSize > 10 { fontSize -= 1 } }
+            Text("\(Int(fontSize))")
+                .font(.inter(9))
+                .foregroundStyle(Theme.textMuted)
+                .frame(width: 16)
+            toolbarBtn(icon: "textformat.size.larger") { if fontSize < 20 { fontSize += 1 } }
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 4)
+        .background(Theme.cardBg)
+    }
+
+    @ViewBuilder
+    private func toolbarBtn(icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.textPrimary)
+                .frame(width: 24, height: 24)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func synthesizePreview(_ preview: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("AI Synthesized (preview)")
+                .font(.inter(10, weight: .semibold))
+                .foregroundStyle(Theme.greenDark)
+            ScrollView {
+                Text(preview)
+                    .font(.inter(12))
+                    .foregroundStyle(Theme.textPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 150)
+            .padding(8)
+            .background(Theme.greenTint.opacity(0.2), in: RoundedRectangle(cornerRadius: 6))
+            HStack(spacing: 10) {
+                Button("Accept") {
+                    content = preview
+                    synthesizedPreview = nil
+                    saveDoc()
+                }
+                .font(.inter(10, weight: .semibold))
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.greenDark)
+                .controlSize(.mini)
+                Button("Dismiss") { synthesizedPreview = nil }
+                    .font(.inter(10))
+                    .foregroundStyle(Theme.textMuted)
+                    .buttonStyle(.plain)
+            }
+        }
+        .padding(12)
+    }
+
+    private func loadDoc() {
+        doc = try? Queries.getMasterDoc(tag: tag)
+        if let doc {
+            content = doc.content
+            title = doc.title
+        } else {
+            title = tag.replacingOccurrences(of: "-", with: " ").capitalized
+            content = ""
+            try? Queries.upsertMasterDoc(tag: tag, content: "", title: title)
+            doc = try? Queries.getMasterDoc(tag: tag)
+        }
+    }
+
+    private func saveDoc() {
+        try? Queries.upsertMasterDoc(tag: tag, content: content, title: title)
+    }
+
+    private func insertLine(_ prefix: String) {
+        if content.isEmpty || content.hasSuffix("\n") {
+            content += prefix
+        } else {
+            content += "\n\(prefix)"
+        }
+    }
+
+    private func synthesize() {
+        isSynthesizing = true
+        Task {
+            do {
+                let allDumps = (try? Queries.getAllDumps()) ?? []
+                var bulletTexts: [String] = []
+                for dump in allDumps {
+                    let bullets = DumpBullet.parse(from: dump.content)
+                    for bullet in bullets where !bullet.isRetired && bullet.tags.contains(tag.lowercased()) {
+                        bulletTexts.append(bullet.text)
+                    }
+                }
+                let result = try await AIService.synthesizeMasterDoc(existingContent: content, bullets: bulletTexts.joined(separator: "\n"))
                 await MainActor.run {
                     synthesizedPreview = result
                     isSynthesizing = false

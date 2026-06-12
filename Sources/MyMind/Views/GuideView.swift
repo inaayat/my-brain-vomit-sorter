@@ -73,6 +73,8 @@ struct GuideView: View {
                     guideBullet(icon: "archivebox", text: "Retire bullets from tag search — archive icon hides them without deleting")
                     guideBullet(icon: "eye", text: "'Show retired' toggle reveals archived bullets (strikethrough style)")
                     guideBullet(icon: "sparkles", text: "'Analyze with AI' parses into actions, brainstorms, wins, or resources")
+                    guideBullet(icon: "sparkles", text: "Past days also have 'Analyze with AI' — expand a past day to see the button")
+                    guideBullet(icon: "plus.circle", text: "Purple + icon on each bullet adds it directly to the Master Doc (when panel is open)")
                     guideBullet(icon: "tag", text: "AI also suggests tags for untagged bullets — accept with one click")
                     guideBullet(icon: "lock", text: "Past days auto-lock — click 'Unlock' to edit them")
                 }

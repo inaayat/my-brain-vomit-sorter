@@ -19,26 +19,37 @@ struct DailyDumpView: View {
     @State private var editedTagName = ""
     @State private var showRetired = false
     @State private var reviewClusters: [Cluster] = []
+    @State private var showMasterDocPanel = false
     @State private var isUpdating = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                header
-                tagBar
-                if let tag = searchTag {
-                    tagSearchResults(tag: tag)
-                } else {
-                    guideBar
-                    todaySection
-                    if !suggestedTags.isEmpty { tagSuggestionsSection }
-                if !proposedItems.isEmpty { reviewSection }
-                    if !pastDumps.isEmpty { pastSection }
+        HStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    header
+                    tagBar
+                    if let tag = searchTag {
+                        tagSearchResults(tag: tag)
+                    } else {
+                        guideBar
+                        todaySection
+                        if !suggestedTags.isEmpty { tagSuggestionsSection }
+                    if !proposedItems.isEmpty { reviewSection }
+                        if !pastDumps.isEmpty { pastSection }
+                    }
                 }
+                .padding(28)
             }
-            .padding(28)
+            .background(Theme.bg)
+
+            if showMasterDocPanel, let tag = searchTag {
+                Divider()
+                MasterDocPanelView(appState: appState, tag: tag, onClose: {
+                    withAnimation { showMasterDocPanel = false }
+                })
+                .frame(maxWidth: .infinity)
+            }
         }
-        .background(Theme.bg)
         .onAppear { reload() }
     }
 
@@ -305,7 +316,7 @@ struct DailyDumpView: View {
                     .foregroundStyle(Theme.textMuted)
                 Spacer()
                 Button {
-                    appState.selectedDestination = .masterDoc(tag)
+                    withAnimation { showMasterDocPanel.toggle() }
                 } label: {
                     HStack(spacing: 3) {
                         Image(systemName: "doc.text.fill")
@@ -366,6 +377,17 @@ struct DailyDumpView: View {
                     .textSelection(.enabled)
             }
             Spacer()
+            if showMasterDocPanel, let tag = searchTag {
+                Button {
+                    appendBulletToMasterDoc(text: result.bulletText, tag: tag)
+                } label: {
+                    Image(systemName: "plus.circle")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Theme.purple)
+                }
+                .buttonStyle(.plain)
+                .help("Add to Master Doc")
+            }
             Button {
                 toggleRetire(result: result)
             } label: {
@@ -697,6 +719,17 @@ struct DailyDumpView: View {
                             .foregroundStyle(Theme.textMuted)
                         }
                         Spacer()
+                        Button {
+                            analyzePastDump(dump)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkles")
+                                Text("Analyze with AI")
+                            }
+                            .font(.inter(10, weight: .semibold))
+                            .foregroundStyle(Theme.purple)
+                        }
+                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 12)
                     .padding(.bottom, 8)
@@ -905,6 +938,31 @@ struct DailyDumpView: View {
                 await MainActor.run {
                     proposedItems = result.proposedItems
                     suggestedTags = result.suggestedTags
+                    reviewClusters = (try? Queries.getAllClustersWithItems()) ?? []
+                    isAnalyzing = false
+                }
+            } catch {
+                await MainActor.run { isAnalyzing = false }
+            }
+        }
+    }
+
+    private func appendBulletToMasterDoc(text: String, tag: String) {
+        let existing = try? Queries.getMasterDoc(tag: tag)
+        let currentContent = existing?.content ?? ""
+        let title = existing?.title ?? tag.replacingOccurrences(of: "-", with: " ").capitalized
+        let bullet = "• \(stripTags(text))"
+        let newContent = currentContent.isEmpty ? bullet : currentContent + "\n" + bullet
+        try? Queries.upsertMasterDoc(tag: tag, content: newContent, title: title)
+    }
+
+    private func analyzePastDump(_ dump: DailyDump) {
+        isAnalyzing = true
+        Task {
+            do {
+                let result = try await AIService.analyzeDump(content: dump.content)
+                await MainActor.run {
+                    proposedItems = result.proposedItems
                     reviewClusters = (try? Queries.getAllClustersWithItems()) ?? []
                     isAnalyzing = false
                 }
