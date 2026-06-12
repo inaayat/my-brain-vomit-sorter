@@ -88,15 +88,41 @@ struct GuideView: View {
                     guideText("Press Enter to submit. Shift+Enter for a new line.")
                 }
 
+                guideSection(title: "Master Docs", color: Theme.purple) {
+                    guideText("Build persistent knowledge documents organized by topic — one per tag or any custom topic.")
+                    guideBullet(icon: "doc.text.fill", text: "Sidebar icon opens the Master Docs list")
+                    guideBullet(icon: "plus.circle.fill", text: "'New Doc' creates a doc for any topic (no existing tag required)")
+                    guideBullet(icon: "number", text: "Or click 'Master Doc' in a tag search to start from a tag")
+                    guideBullet(icon: "list.bullet", text: "'Add bullets' panel picks tagged bullets to append to the doc")
+                    guideBullet(icon: "sparkles", text: "'AI Synthesize' organizes content into a clean structured document")
+                    guideBullet(icon: "bold", text: "Toolbar: bold, italic, bullets, numbered lists, headings, quotes, code, font size")
+                    guideBullet(icon: "trash", text: "Delete a doc with the trash icon in the header")
+                }
+
+                guideSection(title: "AI Cleanup", color: Theme.greenDark) {
+                    guideText("Find and merge redundant items across your entire list.")
+                    guideBullet(icon: "wand.and.stars", text: "'Scan for Duplicates' link in the Overview feed")
+                    guideBullet(icon: "arrow.triangle.merge", text: "AI groups near-duplicates and suggests merged versions")
+                    guideBullet(icon: "checkmark.circle", text: "Accept merge, keep both, or delete duplicates per group")
+                }
+
+                guideSection(title: "Proposed Items", color: Theme.greenDark) {
+                    guideText("When AI analyzes your daily dump, proposed items now have inline controls:")
+                    guideBullet(icon: "tag", text: "Tap the category pill to cycle: Action → Brainstorm → Resource → Win")
+                    guideBullet(icon: "rectangle.3.group", text: "Cluster dropdown to assign directly before accepting")
+                    guideBullet(icon: "sparkles", text: "AI rewrites items for clarity — no filler, full sentences")
+                }
+
                 guideSection(title: "Sidebar", color: Theme.textMuted) {
-                    guideBullet(icon: "square.grid.2x2", text: "Feed — main view with filter cards")
+                    guideBullet(icon: "square.grid.2x2", text: "Feed — main view with filter cards and 'Scan for Duplicates'")
                     guideBullet(icon: "list.bullet.rectangle.portrait", text: "Daily Dump — freeform notepad with tag search")
-                    guideBullet(icon: "rectangle.3.group", text: "Clusters — manage, merge, delete clusters")
+                    guideBullet(icon: "rectangle.3.group", text: "Clusters — manage, merge, add items, delete clusters")
                     guideBullet(icon: "checkmark.circle", text: "Completed — all finished items")
                     guideBullet(icon: "trophy.fill", text: "Wins — your achievement log")
-                    guideBullet(icon: "square.and.arrow.up", text: "Export — saves all data as a readable Markdown file")
+                    guideBullet(icon: "square.and.arrow.up", text: "Export — saves all data as Markdown")
+                    guideBullet(icon: "doc.text.fill", text: "Master Docs — persistent topic documents")
                     guideBullet(icon: "brain.head.profile", text: "This guide (you're here)")
-                    guideBullet(icon: "switch.2", text: "Bro Mode toggle at the bottom — switches to Apple dark mode aesthetic")
+                    guideBullet(icon: "switch.2", text: "Bro Mode toggle — Apple dark mode aesthetic")
                 }
 
                 guideSection(title: "Bro Mode", color: Theme.textMuted) {

@@ -7,6 +7,9 @@ enum NavigationDestination: Hashable {
     case wins
     case clusters
     case dailyDump
+    case cleanup
+    case masterDocs
+    case masterDoc(String)
     case guide
     case itemDetail(String)
 }

@@ -18,6 +18,7 @@ struct DailyDumpView: View {
     @State private var editingTag: String? = nil
     @State private var editedTagName = ""
     @State private var showRetired = false
+    @State private var reviewClusters: [Cluster] = []
     @State private var isUpdating = false
 
     var body: some View {
@@ -303,6 +304,22 @@ struct DailyDumpView: View {
                     .font(.inter(11))
                     .foregroundStyle(Theme.textMuted)
                 Spacer()
+                Button {
+                    appState.selectedDestination = .masterDoc(tag)
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "doc.text.fill")
+                            .font(.system(size: 9))
+                        Text("Master Doc")
+                            .font(.inter(9, weight: .medium))
+                    }
+                    .foregroundStyle(Theme.purple)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Theme.purple.opacity(0.1), in: Capsule())
+                }
+                .buttonStyle(.plain)
+
                 if retiredCount > 0 {
                     Button {
                         withAnimation { showRetired.toggle() }
@@ -521,50 +538,102 @@ struct DailyDumpView: View {
 
     @ViewBuilder
     private func proposedRow(index: Int, proposed: ProposedItem) -> some View {
-        HStack(spacing: 10) {
-            if proposed.isWin {
-                Image(systemName: "trophy.fill")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Theme.yellowDark)
-                    .frame(width: 24, height: 24)
-                    .background(Theme.yellowTint.opacity(0.5), in: RoundedRectangle(cornerRadius: Theme.radius(6)))
-            } else {
-                CategoryBadge(category: proposed.category)
-            }
-            VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
+                // Category picker — tap to cycle
+                Button {
+                    cycleCategory(at: index)
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: categoryIcon(proposedItems[index].category, isWin: proposedItems[index].isWin))
+                            .font(.system(size: 9, weight: .semibold))
+                        Text(proposedItems[index].isWin ? "Win" : proposedItems[index].category.rawValue.capitalized)
+                            .font(.inter(10, weight: .semibold))
+                    }
+                    .foregroundStyle(categoryLabelColor(proposedItems[index].category, isWin: proposedItems[index].isWin))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(categoryLabelColor(proposedItems[index].category, isWin: proposedItems[index].isWin).opacity(0.12), in: Capsule())
+                }
+                .buttonStyle(.plain)
+
                 Text(proposed.text)
                     .font(.inter(12))
                     .foregroundStyle(Theme.textPrimary)
-                if !proposed.tags.isEmpty {
-                    HStack(spacing: 3) {
-                        ForEach(proposed.tags, id: \.self) { tag in
-                            Text("#\(tag)")
-                                .font(.inter(9))
-                                .foregroundStyle(Theme.purple)
-                        }
+                    .lineLimit(2)
+
+                Spacer()
+
+                // Cluster picker
+                Picker("", selection: $proposedItems[index].clusterId) {
+                    Text("No cluster").tag(nil as String?)
+                    ForEach(reviewClusters) { cluster in
+                        Text(cluster.title).tag(cluster.id as String?)
+                    }
+                }
+                .pickerStyle(.menu)
+                .font(.inter(10))
+                .frame(maxWidth: 140)
+
+                Button {
+                    acceptItem(at: index)
+                } label: {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(Theme.greenDark)
+                }
+                .buttonStyle(.plain)
+                Button {
+                    _ = withAnimation { proposedItems.remove(at: index) }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(Theme.textMuted)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if !proposed.tags.isEmpty {
+                HStack(spacing: 3) {
+                    ForEach(proposed.tags, id: \.self) { tag in
+                        Text("#\(tag)")
+                            .font(.inter(9))
+                            .foregroundStyle(Theme.purple)
                     }
                 }
             }
-            Spacer()
-            Button {
-                acceptItem(at: index)
-            } label: {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(Theme.greenDark)
-            }
-            .buttonStyle(.plain)
-            Button {
-                _ = withAnimation { proposedItems.remove(at: index) }
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(Theme.textMuted)
-            }
-            .buttonStyle(.plain)
         }
         .padding(10)
         .background(RoundedRectangle(cornerRadius: 8).fill(proposedItemBg(proposed.category)))
+    }
+
+    private func cycleCategory(at index: Int) {
+        let order: [(Category, Bool)] = [(.action, false), (.brainstorm, false), (.resource, false), (.action, true)]
+        let current = (proposedItems[index].category, proposedItems[index].isWin)
+        let currentIdx = order.firstIndex(where: { $0.0 == current.0 && $0.1 == current.1 }) ?? 0
+        let next = order[(currentIdx + 1) % order.count]
+        proposedItems[index].category = next.0
+        proposedItems[index].isWin = next.1
+    }
+
+    private func categoryIcon(_ category: Category, isWin: Bool) -> String {
+        if isWin { return "trophy.fill" }
+        switch category {
+        case .action: return "bolt.fill"
+        case .brainstorm: return "cloud.bolt.fill"
+        case .resource: return "link"
+        case .revisit: return "arrow.counterclockwise"
+        }
+    }
+
+    private func categoryLabelColor(_ category: Category, isWin: Bool) -> Color {
+        if isWin { return Theme.yellowDark }
+        switch category {
+        case .action: return Theme.greenDark
+        case .brainstorm: return Theme.pinkDark
+        case .resource: return Theme.blueDark
+        case .revisit: return Theme.yellowDark
+        }
     }
 
     // MARK: - Past Days
@@ -836,6 +905,7 @@ struct DailyDumpView: View {
                 await MainActor.run {
                     proposedItems = result.proposedItems
                     suggestedTags = result.suggestedTags
+                    reviewClusters = (try? Queries.getAllClustersWithItems()) ?? []
                     isAnalyzing = false
                 }
             } catch {
@@ -847,7 +917,6 @@ struct DailyDumpView: View {
     private func acceptItem(at index: Int) {
         let proposed = proposedItems[index]
 
-        // "win" category: create a completed action + log a win
         if proposed.isWin {
             var item = Item.new(text: proposed.text, category: .action)
             item.done = true
@@ -863,8 +932,13 @@ struct DailyDumpView: View {
             if !proposed.tags.isEmpty {
                 item.tags = try? String(data: JSONEncoder().encode(proposed.tags), encoding: .utf8)
             }
+            if let clusterId = proposed.clusterId {
+                item.clusterId = clusterId
+            }
             try? Queries.addItem(item)
-            Task { _ = try? await AIService.classifyAndCluster(text: proposed.text, itemId: item.id, category: item.category) }
+            if proposed.clusterId == nil {
+                Task { _ = try? await AIService.classifyAndCluster(text: proposed.text, itemId: item.id, category: item.category) }
+            }
         }
 
         appState.refreshCounts()
@@ -874,11 +948,12 @@ struct DailyDumpView: View {
 
 struct ProposedItem: Identifiable {
     let id = UUID()
-    let text: String
-    let category: Category
-    let isWin: Bool
+    var text: String
+    var category: Category
+    var isWin: Bool
     let tags: [String]
     let originalText: String
+    var clusterId: String?
 }
 
 struct TagSearchResult: Identifiable {

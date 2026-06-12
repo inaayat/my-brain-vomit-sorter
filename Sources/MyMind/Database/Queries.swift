@@ -14,6 +14,12 @@ struct Queries {
         try db.write { db in try item.update(db) }
     }
 
+    static func updateItemText(id: String, text: String) throws {
+        try db.write { db in
+            try db.execute(sql: "UPDATE items SET text = ? WHERE id = ?", arguments: [text, id])
+        }
+    }
+
     static func deleteItem(id: String) throws {
         try db.write { db in
             _ = try Link.filter(Link.Columns.fromId == id || Link.Columns.toId == id).deleteAll(db)
@@ -379,6 +385,40 @@ struct Queries {
                 sql: "UPDATE daily_dumps SET locked = NOT locked, updatedAt = ? WHERE id = ?",
                 arguments: [Date(), id]
             )
+        }
+    }
+
+    // MARK: - Master Docs
+
+    static func getMasterDoc(tag: String) throws -> MasterDoc? {
+        try db.read { db in
+            try MasterDoc.filter(MasterDoc.Columns.tag == tag).fetchOne(db)
+        }
+    }
+
+    static func getAllMasterDocs() throws -> [MasterDoc] {
+        try db.read { db in
+            try MasterDoc.order(MasterDoc.Columns.updatedAt.desc).fetchAll(db)
+        }
+    }
+
+    static func upsertMasterDoc(tag: String, content: String, title: String) throws {
+        try db.write { db in
+            if var existing = try MasterDoc.filter(MasterDoc.Columns.tag == tag).fetchOne(db) {
+                existing.content = content
+                existing.title = title
+                existing.updatedAt = Date()
+                try existing.update(db)
+            } else {
+                let doc = MasterDoc(id: UUID().uuidString, tag: tag, title: title, content: content, createdAt: Date(), updatedAt: Date())
+                try doc.insert(db)
+            }
+        }
+    }
+
+    static func deleteMasterDoc(id: String) throws {
+        try db.write { db in
+            _ = try MasterDoc.filter(MasterDoc.Columns.id == id).deleteAll(db)
         }
     }
 }

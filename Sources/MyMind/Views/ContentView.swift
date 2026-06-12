@@ -61,6 +61,12 @@ struct ContentView: View {
             ClustersView(appState: appState)
         case .dailyDump:
             DailyDumpView(appState: appState)
+        case .cleanup:
+            CleanupView(appState: appState)
+        case .masterDocs:
+            MasterDocsListView(appState: appState)
+        case .masterDoc(let tag):
+            MasterDocView(appState: appState, tag: tag)
         case .guide:
             GuideView()
         case .itemDetail:

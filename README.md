@@ -82,6 +82,8 @@ The app connects to Ollama at `localhost:11434`. If Ollama isn't running, AI fea
 | **Wins** | Achievement log. Log wins directly from the Wins view, on task completion, or via AI Analyze. Attach artifact URLs. |
 | **Completed** | All done items across all categories. |
 | **Export** | One-click export of all data (items, clusters, wins, daily dumps) as a readable Markdown file. |
+| **Master Docs** | Per-topic persistent documents. Build up knowledge over time — manually pick bullets or AI-synthesize into a clean doc. |
+| **AI Cleanup** | Scan all items for redundancies. AI groups near-duplicates and suggests merged versions. Accept, keep, or delete per group. |
 
 ### Daily Dump
 - **Sidebar tab**: Full notepad view with today's editor, past days (read-only with unlock), and tag search
@@ -94,15 +96,34 @@ The app connects to Ollama at `localhost:11434`. If Ollama isn't running, AI fea
 - **Tag click**: Single-click a tag pill to see all bullets with that tag across all days
 - **Retire/archive**: Archive icon on each bullet in tag search hides it without deleting. "Show retired" toggle reveals them.
 - **AI Analyze**: Parses your dump into proposed actions, brainstorms, wins, or resources — review and accept individually
+- **Proposed item controls**: Tap category pill to cycle type (Action/Brainstorm/Resource/Win), pick cluster from dropdown, all before accepting
+- **AI clarity rewrite**: Proposed items are rewritten for clarity — full sentences, no filler words or shorthand
+- **Master Doc link**: Click "Master Doc" in tag search header to open/create the topic doc for that tag
 - **AI Tag Suggestions**: Analyze also suggests `#tags` for untagged bullets based on patterns — accept with one click
+
+### Master Docs
+- **Per-topic documents**: Each doc is tied to a tag or any custom topic name
+- **Create from anywhere**: "New Doc" button in Master Docs list, or "Master Doc" link in tag search
+- **Manual bullet pick**: Side panel shows all tagged bullets with checkboxes — select and append to doc
+- **AI Synthesize**: Sends all content to Ollama, returns a clean structured document with headings and organization
+- **Formatting toolbar**: Bold, italic, bullet list, numbered list, heading, quote, code, font size controls
+- **Delete**: Trash icon in header with confirmation
 
 ### AI Features (via local Ollama)
 - **Auto-categorize**: On every capture (Auto mode), AI picks category (action/brainstorm/resource), cleans text, and generates tags
 - **Auto-cluster**: After saving, AI assigns the item to an existing cluster or creates a new one with a generated title
 - **Drag-to-cluster title**: When you drag two items together, AI names the new cluster
 - **Dump analysis**: AI parses daily dump into actions, brainstorms, wins, and resources + suggests tags for untagged bullets
+- **Clarity rewrite**: Proposed items from dump analysis are rewritten with professional language — no filler, no shorthand
+- **Redundancy scan**: "Scan for Duplicates" in Overview finds near-duplicate items, suggests merged text
+- **Doc synthesis**: AI organizes Master Doc content into a structured document with headings and bullet points
 - **Notes analysis**: Save notes on any item → AI suggests follow-up actions and brainstorm ideas you can add with one click
 - **100% local**: All AI runs through Ollama (llama3.2) on your machine — no data leaves your computer
+
+### Clusters
+- **Add items**: `+` icon on any cluster card opens a sheet to bulk-add unclustered items (works from Overview and Clusters view)
+- **Delete cluster**: Trash icon on any cluster card (items return to unclustered)
+- **Merge clusters**: Select 2+ clusters and merge them in Clusters view
 
 ### UX
 - **Export**: Sidebar button exports all data as a clean Markdown file via save dialog

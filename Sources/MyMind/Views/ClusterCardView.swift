@@ -7,6 +7,8 @@ struct ClusterCardView: View {
     var onChanged: (() -> Void)?
     var onItemComplete: ((String) -> Void)?
     var onItemTap: ((String) -> Void)?
+    var onAddItems: (() -> Void)?
+    var onDelete: (() -> Void)?
     var expandAllCounter: Int = 0
     var collapseAllCounter: Int = 0
 
@@ -41,27 +43,32 @@ struct ClusterCardView: View {
 
     // MARK: - Collapsed: slim full-width bar
     private var collapsedBar: some View {
-        HStack {
-            Text(cluster.title)
-                .font(.inter(11, weight: .semibold))
-                .foregroundStyle(Theme.yellowDark)
-            Spacer()
-            Image(systemName: "chevron.down")
-                .font(.system(size: 9))
-                .foregroundStyle(Theme.textMuted)
+        HStack(spacing: 0) {
+            HStack {
+                Text(cluster.title)
+                    .font(.inter(11, weight: .semibold))
+                    .foregroundStyle(Theme.yellowDark)
+                Spacer()
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 9))
+                    .foregroundStyle(Theme.textMuted)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2) {
+                editTitle = cluster.title
+                isEditing = true
+            }
+            .onTapGesture(count: 1) {
+                withAnimation(.easeInOut(duration: 0.25)) { isExpanded = true }
+            }
+
+            clusterActionButtons(size: 11)
+                .padding(.leading, 10)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 6)
         .frame(maxWidth: .infinity)
         .background(Theme.clusterBg, in: RoundedRectangle(cornerRadius: Theme.radius(8)))
-        .contentShape(Rectangle())
-        .onTapGesture(count: 2) {
-            editTitle = cluster.title
-            isEditing = true
-        }
-        .onTapGesture(count: 1) {
-            withAnimation(.easeInOut(duration: 0.25)) { isExpanded = true }
-        }
     }
 
     // MARK: - Expanded: title left, items right (tree)
@@ -79,23 +86,29 @@ struct ClusterCardView: View {
                         .font(.inter(9))
                         .controlSize(.small)
                 } else {
-                    Text(cluster.title)
-                        .font(.inter(11, weight: .semibold))
-                        .foregroundStyle(Theme.yellowDark)
-                        .lineLimit(3)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .frame(width: 110)
-                        .background(Theme.clusterBg, in: RoundedRectangle(cornerRadius: Theme.radius(10)))
-                        .contentShape(Rectangle())
-                        .onTapGesture(count: 2) {
-                            editTitle = cluster.title
-                            isEditing = true
-                        }
-                        .onTapGesture(count: 1) {
-                            withAnimation(.easeInOut(duration: 0.25)) { isExpanded = false }
-                        }
+                    VStack(spacing: 4) {
+                        Text(cluster.title)
+                            .font(.inter(11, weight: .semibold))
+                            .foregroundStyle(Theme.yellowDark)
+                            .lineLimit(3)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 10)
+                            .padding(.top, 8)
+                            .padding(.bottom, 4)
+                            .frame(width: 110)
+                            .contentShape(Rectangle())
+                            .onTapGesture(count: 2) {
+                                editTitle = cluster.title
+                                isEditing = true
+                            }
+                            .onTapGesture(count: 1) {
+                                withAnimation(.easeInOut(duration: 0.25)) { isExpanded = false }
+                            }
+                        clusterActionButtons(size: 12)
+                            .padding(.bottom, 8)
+                    }
+                    .frame(width: 110)
+                    .background(Theme.clusterBg, in: RoundedRectangle(cornerRadius: Theme.radius(10)))
                 }
             }
 
@@ -211,6 +224,26 @@ struct ClusterCardView: View {
         case .brainstorm: return Color(hex: "#FBEAF1")
         case .revisit: return Color(hex: "#FBF5E3")
         case .resource: return Color(hex: "#EEF3FB")
+        }
+    }
+
+    @ViewBuilder
+    private func clusterActionButtons(size: CGFloat) -> some View {
+        HStack(spacing: 10) {
+            Button { onAddItems?() } label: {
+                Image(systemName: "plus.circle")
+                    .font(.system(size: size))
+                    .foregroundStyle(Theme.purple)
+            }
+            .buttonStyle(.plain)
+            .help("Add items to cluster")
+            Button { onDelete?() } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: size))
+                    .foregroundStyle(Theme.pinkDark)
+            }
+            .buttonStyle(.plain)
+            .help("Delete cluster")
         }
     }
 

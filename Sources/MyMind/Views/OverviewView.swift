@@ -9,14 +9,32 @@ struct OverviewView: View {
     @State private var resourceCounts: [String: Int] = [:]
     @State private var expandAllCounter = 0
     @State private var collapseAllCounter = 0
+    @State private var addItemsTarget: Cluster? = nil
+    @State private var addItemsSelection: Set<String> = []
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 InlineCaptureView(appState: appState) { reload() }
-                filterChips
-                if activeFilter != nil && !allClusters.isEmpty {
-                    expandCollapseControls
+                HStack {
+                    filterChips
+                }
+                HStack {
+                    if activeFilter != nil && !allClusters.isEmpty {
+                        expandCollapseControls
+                    }
+                    Spacer()
+                    Button {
+                        appState.selectedDestination = .cleanup
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "wand.and.stars")
+                            Text("Scan for Duplicates")
+                        }
+                        .font(.inter(10, weight: .medium))
+                        .foregroundStyle(Theme.purple)
+                    }
+                    .buttonStyle(.plain)
                 }
                 itemFeed
             }
@@ -24,6 +42,132 @@ struct OverviewView: View {
         }
         .background(Theme.bg)
         .onAppear { reload() }
+        .sheet(item: $addItemsTarget) { cluster in
+            addItemsSheet(for: cluster)
+        }
+    }
+
+    @ViewBuilder
+    private func addItemsSheet(for cluster: Cluster) -> some View {
+        let unclustered = allItems.filter { $0.clusterId == nil && !$0.done }
+        VStack(spacing: 0) {
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 6) {
+                    Image(systemName: "rectangle.3.group")
+                        .font(.system(size: 22))
+                        .foregroundStyle(Theme.yellowDark)
+                    Text(cluster.title)
+                        .font(.inter(18, weight: .bold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("Choose items to add to this cluster")
+                        .font(.inter(12))
+                        .foregroundStyle(Theme.textMuted)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+                .padding(.horizontal, 20)
+                Button {
+                    addItemsTarget = nil
+                    addItemsSelection.removeAll()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(Theme.textMuted.opacity(0.5))
+                }
+                .buttonStyle(.plain)
+                .padding(16)
+            }
+            .background(Theme.clusterBg)
+            Divider()
+            if unclustered.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "tray")
+                        .font(.system(size: 28))
+                        .foregroundStyle(Theme.textMuted.opacity(0.4))
+                    Text("No unclustered items available")
+                        .font(.inter(13))
+                        .foregroundStyle(Theme.textMuted)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    VStack(spacing: 6) {
+                        ForEach(unclustered) { item in
+                            let selected = addItemsSelection.contains(item.id)
+                            Button {
+                                if selected { addItemsSelection.remove(item.id) }
+                                else { addItemsSelection.insert(item.id) }
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 18))
+                                        .foregroundStyle(selected ? Theme.purple : Theme.textMuted.opacity(0.4))
+                                    Text(item.text)
+                                        .font(.inter(13))
+                                        .foregroundStyle(Theme.textPrimary)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: Theme.radius(10))
+                                        .fill(selected ? Theme.purple.opacity(0.07) : Theme.cardBg)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: Theme.radius(10))
+                                                .strokeBorder(selected ? Theme.purple.opacity(0.3) : Theme.cardBorder, lineWidth: 1)
+                                        )
+                                )
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(16)
+                }
+            }
+            Divider()
+            HStack(spacing: 12) {
+                if !addItemsSelection.isEmpty {
+                    Text("\(addItemsSelection.count) selected")
+                        .font(.inter(12, weight: .semibold))
+                        .foregroundStyle(Theme.purple)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Theme.purple.opacity(0.1), in: Capsule())
+                }
+                Spacer()
+                Button("Cancel") {
+                    addItemsTarget = nil
+                    addItemsSelection.removeAll()
+                }
+                .font(.inter(13))
+                .foregroundStyle(Theme.textMuted)
+                .buttonStyle(.plain)
+                Button {
+                    for id in addItemsSelection {
+                        try? Queries.assignToCluster(itemId: id, clusterId: cluster.id)
+                    }
+                    addItemsTarget = nil
+                    addItemsSelection.removeAll()
+                    reload()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Add to Cluster")
+                    }
+                    .font(.inter(13, weight: .semibold))
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.purple)
+                .disabled(addItemsSelection.isEmpty)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+        .frame(width: 480, height: 520)
+        .background(Theme.bg)
     }
 
     private var expandCollapseControls: some View {
@@ -147,6 +291,13 @@ struct OverviewView: View {
                         }
                     }, onItemTap: { itemId in
                         appState.navigate(to: .itemDetail(itemId))
+                    }, onAddItems: {
+                        addItemsSelection.removeAll()
+                        addItemsTarget = cluster
+                    }, onDelete: {
+                        try? Queries.deleteCluster(id: cluster.id)
+                        reload()
+                        appState.refreshCounts()
                     }, expandAllCounter: expandAllCounter, collapseAllCounter: collapseAllCounter)
                 }
 

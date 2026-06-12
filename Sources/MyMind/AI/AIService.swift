@@ -183,7 +183,7 @@ struct AIService {
             You analyze a daily brain-dump (bullet-pointed thoughts). You do two things:
 
             1. EXTRACT ITEMS: For each meaningful bullet, propose it as a MyMind item:
-            - text: a clean, concise version of the thought
+            - text: a CLEAR, professional rewrite of the thought — full sentence, no filler words, no hedging language ("maybe", "I think", "probably"), no shorthand or abbreviations. Transform casual notes into actionable, precise language. Example: "follow up w/ Sarah re budget thing" becomes "Follow up with Sarah regarding Q3 budget approval"
             - category: one of "action" (concrete task), "brainstorm" (idea/observation), "win" (achievement/accomplishment), or "resource" (URL/reference/article)
             - tags: 1-3 short topic tags (lowercase, use exact project/system names like "workday", "accounting-center", "jira")
             - original_text: the exact source bullet text
@@ -236,6 +236,68 @@ struct AIService {
         }
 
         return AnalyzeResult(proposedItems: items, suggestedTags: suggestedTags)
+    }
+
+    // MARK: - Master Doc Synthesis
+
+    static func synthesizeMasterDoc(existingContent: String, bullets: String) async throws -> String {
+        let system = """
+            You organize notes into a clean, well-structured document. Your output should be well-formatted Markdown.
+            Use headings (##, ###) to group by theme. Use bullet points for individual items. Use clear, professional language.
+            Preserve ALL information from the input — do not drop anything.
+            Remove duplicates. Merge related points under the same heading.
+            If there is existing document content, integrate the new bullets into the existing structure rather than appending at the end.
+            Return ONLY the final document content (no explanation, no preamble).
+            """
+        var userMessage = ""
+        if !existingContent.isEmpty {
+            userMessage += "EXISTING DOCUMENT:\n\(existingContent)\n\n"
+        }
+        userMessage += "BULLETS TO INTEGRATE:\n\(bullets)"
+        return try await client.send(system: system, userMessage: userMessage, maxTokens: 4000)
+    }
+
+    // MARK: - Redundancy Cleanup
+
+    struct RedundancyGroup: Identifiable {
+        let id = UUID()
+        let itemIds: [String]
+        let reason: String
+        let mergedText: String
+    }
+
+    static func findRedundancies(items: [(id: String, text: String, category: String)]) async throws -> [RedundancyGroup] {
+        guard !items.isEmpty else { return [] }
+        let itemsJSON = items.map { "{\"id\":\"\($0.id)\",\"text\":\"\($0.text.replacingOccurrences(of: "\"", with: "'"))\",\"category\":\"\($0.category)\"}" }.joined(separator: ",")
+        let system = """
+            You analyze a list of task/brainstorm items and find groups of redundant or near-duplicate entries.
+            Two items are redundant if they say essentially the same thing, one is a subset of the other, or they refer to the same action with different wording.
+
+            For each group found:
+            - ids: the item IDs that are redundant with each other (minimum 2)
+            - reason: one short sentence explaining why they're duplicates
+            - merged_text: a single clean sentence that captures all the meaning from the group
+
+            Respond with ONLY valid JSON:
+            [{"ids": ["id1", "id2"], "reason": "...", "merged_text": "..."}]
+
+            If no redundancies exist, return an empty array: []
+            Only flag CLEAR duplicates — don't group items that are merely related to the same topic.
+            """
+
+        let response = try await client.send(system: system, userMessage: "[\(itemsJSON)]", maxTokens: 2000)
+        let cleaned = cleanJSON(response)
+        guard let data = cleaned.data(using: .utf8),
+              let arr = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            return []
+        }
+
+        return arr.compactMap { obj in
+            guard let ids = obj["ids"] as? [String], ids.count >= 2,
+                  let reason = obj["reason"] as? String,
+                  let mergedText = obj["merged_text"] as? String else { return nil }
+            return RedundancyGroup(itemIds: ids, reason: reason, mergedText: mergedText)
+        }
     }
 
     // MARK: - Helpers

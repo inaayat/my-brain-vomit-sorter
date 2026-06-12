@@ -35,6 +35,8 @@ struct Sidebar: View {
                 }
                 .buttonStyle(.plain)
                 .help("Export Data")
+
+                iconButton(.masterDocs, icon: "doc.text.fill", tooltip: "Master Docs")
             }
 
             Spacer()

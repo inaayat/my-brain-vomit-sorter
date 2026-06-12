@@ -30,12 +30,6 @@ struct ItemCardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(cardBackground, in: RoundedRectangle(cornerRadius: Theme.radius(10)))
         .contentShape(RoundedRectangle(cornerRadius: Theme.radius(10)))
-        .onTapGesture(count: 2) {
-            enterEditMode()
-        }
-        .onTapGesture(count: 1) {
-            if !isEditing { onTap() }
-        }
         .overlay(
             RoundedRectangle(cornerRadius: Theme.radius(10))
                 .strokeBorder(isDropTarget ? Theme.purple : (isEditing ? Theme.purple.opacity(0.6) : Theme.cardBorder), lineWidth: isDropTarget || isEditing ? 2 : 1)
@@ -54,6 +48,9 @@ struct ItemCardView: View {
     private var normalLayout: some View {
         HStack(alignment: .center, spacing: 10) {
             dragContent
+                .contentShape(Rectangle())
+                .onTapGesture(count: 2) { enterEditMode() }
+                .onTapGesture(count: 1) { if !isEditing { onTap() } }
                 .draggable(item.id)
 
             Spacer()

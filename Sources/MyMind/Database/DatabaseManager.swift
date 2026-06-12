@@ -102,6 +102,18 @@ final class DatabaseManager: Sendable {
             try db.create(index: "idx_dumps_date", on: "daily_dumps", columns: ["date"])
         }
 
+        migrator.registerMigration("v6-masterdocs") { db in
+            try db.create(table: "master_docs") { t in
+                t.column("id", .text).primaryKey()
+                t.column("tag", .text).notNull().unique()
+                t.column("title", .text).notNull()
+                t.column("content", .text).notNull().defaults(to: "")
+                t.column("createdAt", .datetime).notNull()
+                t.column("updatedAt", .datetime).notNull()
+            }
+            try db.create(index: "idx_masterdocs_tag", on: "master_docs", columns: ["tag"])
+        }
+
         return migrator
     }
 }
