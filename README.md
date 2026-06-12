@@ -1,4 +1,14 @@
-# my-mind
+# my-mind (Retired)
+
+> **This project has been retired and replaced by [Dumpster](https://github.com/inaayat/dumpster)** — a full rebuild with a redesigned architecture, tag-based organization (replacing clusters), magic tags for instant item creation, and a dump-first workflow. All data migrates automatically.
+
+---
+
+*The documentation below is preserved for reference.*
+
+---
+
+# my-mind (Legacy)
 
 A native macOS SwiftUI personal knowledge management app. Capture thoughts, track actions, brainstorm ideas, save resources, cluster related items, and log wins.
 
